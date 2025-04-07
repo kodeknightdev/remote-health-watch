@@ -1,0 +1,42 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+.idea/
+*.swp
+.DS_Store
+TestResults/
+
+# env and secrets
+.env
+.env.*
+!.env.example
+*.pfx
+appsettings.*.local.json
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# node / angular
+node_modules/
+.angular/
+dist/
+coverage/
+
+# local runtime output
+tools/seed/out/
+*.log
