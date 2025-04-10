@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+option csharp_namespace = "RemoteHealthWatch.Contracts.Grpc";
+
+package remotehealthwatch.patients.v1;
+
+// Lookups other services need on the hot path. Callers cache the results and
+// invalidate on patients.thresholds-changed / patients.care-team-changed.
+service PatientDirectory {
+  rpc GetThresholds (PatientRequest) returns (ThresholdSet);
+  rpc GetCareTeam (PatientRequest) returns (CareTeam);
+  rpc GetMonitoringProfile (PatientRequest) returns (MonitoringProfile);
+  rpc GetPatientsForUser (UserRequest) returns (PatientIdList);
+  // checks care-team membership and writes the PHI audit entry in one call
+  rpc AuthorizeAccess (AccessRequest) returns (AccessDecision);
+}
+
+message PatientRequest {
+  string patient_id = 1;
+}
+
+message UserRequest {
+  string user_id = 1;
+  string role = 2;
+}
+
+message Threshold {
+  // HeartRate, SpO2, RespiratoryRate, Temperature, Systolic, Diastolic, Glucose
+  string metric = 1;
+  optional double low_critical = 2;
+  optional double low_warning = 3;
+  optional double high_warning = 4;
+  optional double high_critical = 5;
+  bool overridden = 6;
+}
+
+message ThresholdSet {
+  string patient_id = 1;
+  repeated Threshold thresholds = 2;
+}
+
+message CareTeamMember {
+  string user_id = 1;
+  string role = 2;
+  string display_name = 3;
+  string email = 4;
+  string phone = 5;
+  bool is_primary = 6;
+}
+
+message CareTeam {
+  string patient_id = 1;
+  repeated CareTeamMember members = 2;
+}
+
+message MonitoringProfile {
+  string patient_id = 1;
+  string status = 2;
+  repeated string conditions = 3;
+  int32 spo2_scale = 4;
+  bool on_supplemental_oxygen = 5;
+  int32 interval_seconds = 6;
+  repeated string vitals = 7;
+}
+
+message PatientIdList {
+  bool all = 1;
+  repeated string patient_ids = 2;
+}
+
+message AccessRequest {
+  string user_id = 1;
+  string role = 2;
+  string patient_id = 3;
+  string action = 4;
+  string resource = 5;
+  string service = 6;
+}
+
+message AccessDecision {
+  bool allowed = 1;
+  string reason = 2;
+}

@@ -2,4 +2,15 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf Include="..\protos\*.proto" GrpcServices="Both" Link="Protos\%(Filename)%(Extension)" />
+  </ItemGroup>
 </Project>
