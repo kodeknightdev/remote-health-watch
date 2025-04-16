@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthWatch.ServiceDe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthWatch.Identity", "src\services\identity\RemoteHealthWatch.Identity\RemoteHealthWatch.Identity.csproj", "{F1BCDEF9-3149-4C44-9AA4-874B26182551}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthWatch.Patients", "src\services\patients\RemoteHealthWatch.Patients\RemoteHealthWatch.Patients.csproj", "{21E6A555-99EA-4553-80C6-6F4B5DAFA896}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,18 @@ Global
 		{F1BCDEF9-3149-4C44-9AA4-874B26182551}.Release|x64.Build.0 = Release|Any CPU
 		{F1BCDEF9-3149-4C44-9AA4-874B26182551}.Release|x86.ActiveCfg = Release|Any CPU
 		{F1BCDEF9-3149-4C44-9AA4-874B26182551}.Release|x86.Build.0 = Release|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Debug|x64.Build.0 = Debug|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Debug|x86.Build.0 = Debug|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Release|x64.ActiveCfg = Release|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Release|x64.Build.0 = Release|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Release|x86.ActiveCfg = Release|Any CPU
+		{21E6A555-99EA-4553-80C6-6F4B5DAFA896}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
