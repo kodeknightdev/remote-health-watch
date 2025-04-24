@@ -10,6 +10,5 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <Company>remote-health-watch</Company>
     <Product>remote-health-watch</Product>
-    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 </Project>
