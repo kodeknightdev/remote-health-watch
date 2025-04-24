@@ -1,0 +1,20 @@
+# topic                              partitions   retention.ms
+devices.readings-raw                 12           259200000
+vitals.readings-normalized           12           259200000
+devices.device-paired                6            604800000
+devices.device-unpaired              6            604800000
+devices.device-pairing-failed        6            604800000
+devices.device-silent                6            604800000
+patients.patient-enrolled            6            -1
+patients.thresholds-changed          6            604800000
+patients.care-team-changed           6            -1
+patients.patient-discharged          6            -1
+patients.monitoring-status-changed   6            604800000
+risk.score-updated                   6            604800000
+risk.anomaly-detected                6            604800000
+risk.deterioration-trend             6            604800000
+alerts.alert-raised                  6            604800000
+alerts.acknowledged                  6            604800000
+alerts.escalated                     6            604800000
+alerts.resolved                      6            604800000
+insights.report-generated            3            604800000
