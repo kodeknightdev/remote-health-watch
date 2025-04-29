@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthWatch.Patients"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthWatch.Devices", "src\services\devices\RemoteHealthWatch.Devices\RemoteHealthWatch.Devices.csproj", "{BCF8E9E8-44DC-4A3B-82E9-9553FCC3F84C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RemoteHealthWatch.Vitals", "src\services\vitals\RemoteHealthWatch.Vitals\RemoteHealthWatch.Vitals.csproj", "{CF961801-E485-46DF-A26E-E645E6300A6D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{BCF8E9E8-44DC-4A3B-82E9-9553FCC3F84C}.Release|x64.Build.0 = Release|Any CPU
 		{BCF8E9E8-44DC-4A3B-82E9-9553FCC3F84C}.Release|x86.ActiveCfg = Release|Any CPU
 		{BCF8E9E8-44DC-4A3B-82E9-9553FCC3F84C}.Release|x86.Build.0 = Release|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Debug|x64.Build.0 = Debug|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Debug|x86.Build.0 = Debug|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Release|x64.ActiveCfg = Release|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Release|x64.Build.0 = Release|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Release|x86.ActiveCfg = Release|Any CPU
+		{CF961801-E485-46DF-A26E-E645E6300A6D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
