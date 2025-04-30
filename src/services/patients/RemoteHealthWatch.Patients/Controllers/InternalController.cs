@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using RemoteHealthWatch.Contracts;
+using RemoteHealthWatch.Patients.Data;
 using RemoteHealthWatch.Contracts.Events;
 using RemoteHealthWatch.Patients.Domain;
 using RemoteHealthWatch.Patients.Services;
@@ -10,13 +13,34 @@ namespace RemoteHealthWatch.Patients.Controllers;
 public sealed record PairingEligibility(bool Eligible, MonitoringStatus? Status, string? Reason);
 public sealed record AccessCheckRequest(Guid UserId, string Role, Guid PatientId, string Action, string Resource, string Service);
 public sealed record AccessCheckResponse(bool Allowed);
+public sealed record MonitoringProfileDto(Guid PatientId, MonitoringStatus Status, IReadOnlyList<string> Conditions, int SpO2Scale,
+    bool OnSupplementalOxygen, int IntervalSeconds);
+public sealed record VisiblePatients(bool All, IReadOnlyList<Guid> PatientIds);
 
 /// <summary>REST lookups for services that don't speak gRPC (devices pairing, the Python services).</summary>
 [ApiController]
 [Route("internal")]
 [Authorize]
-public sealed class InternalController(PatientService patients, AuditLog audit) : ControllerBase
+public sealed class InternalController(PatientService patients, AuditLog audit, PatientsDb db) : ControllerBase
 {
+    [HttpGet("patients/{patientId:guid}/profile")]
+    [Authorize(Policy = Policies.Internal)]
+    public async Task<ActionResult<MonitoringProfileDto>> Profile(Guid patientId, CancellationToken ct)
+    {
+        var p = await db.Patients.AsNoTracking().SingleOrDefaultAsync(x => x.Id == patientId, ct);
+        if (p is null) return NotFound();
+        return new MonitoringProfileDto(p.Id, p.Status, p.Conditions, p.SpO2Scale, p.OnSupplementalOxygen, p.Plan.IntervalSeconds);
+    }
+
+    [HttpGet("users/{userId:guid}/patients")]
+    [Authorize(Policy = Policies.Internal)]
+    public async Task<ActionResult<VisiblePatients>> Visible(Guid userId, [FromQuery] string role, CancellationToken ct)
+    {
+        if (Roles.ProgrammeWide.Contains(role)) return new VisiblePatients(true, []);
+        var ids = await db.CareTeamMembers.AsNoTracking().Where(m => m.UserId == userId).Select(m => m.PatientId).ToListAsync(ct);
+        return new VisiblePatients(false, ids);
+    }
+
     [HttpGet("patients/{patientId:guid}/pairing-eligibility")]
     public async Task<ActionResult<PairingEligibility>> PairingEligibility(Guid patientId, CancellationToken ct)
     {
