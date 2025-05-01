@@ -1,0 +1,17 @@
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+pydantic==2.11.3
+pydantic-settings==2.9.1
+confluent-kafka==2.10.0
+SQLAlchemy==2.0.40
+alembic==1.15.2
+pyodbc==5.2.0
+numpy==2.2.5
+pandas==2.2.3
+scikit-learn==1.6.1
+PyJWT==2.10.1
+httpx==0.28.1
+opentelemetry-sdk==1.32.1
+opentelemetry-exporter-otlp-proto-grpc==1.32.1
+opentelemetry-instrumentation-fastapi==0.53b1
+pytest==8.3.5
