@@ -14,6 +14,7 @@ public sealed class MessagingBuilder(IServiceCollection services, KafkaOptions o
     {
         services.AddScoped<IEventOutbox, EventOutbox<TDb>>();
         services.AddScoped<IIdempotentRunner, EfIdempotentRunner<TDb>>();
+        services.AddScoped<PostCommitActions>();
         if (options.Enabled) services.AddHostedService<OutboxDispatcher<TDb>>();
         return this;
     }
