@@ -25,7 +25,7 @@ public sealed class CreateUserValidator : AbstractValidator<CreateUserRequest>
 
 [ApiController]
 [Route("api/users")]
-[Authorize(Policy = Policies.Staff)]
+[Authorize]
 public sealed class UsersController(UserManager<AppUser> users) : ControllerBase
 {
     // coordinators need the staff directory to build care teams
@@ -39,7 +39,17 @@ public sealed class UsersController(UserManager<AppUser> users) : ControllerBase
         return list.Select(AuthController.ToDto).ToList();
     }
 
+    /// <summary>Active staff for paging fallbacks and digests; services only.</summary>
+    [HttpGet("directory")]
+    [Authorize(Policy = Policies.Internal)]
+    public async Task<ActionResult<IReadOnlyList<UserDto>>> Directory(CancellationToken ct)
+    {
+        var list = await users.Users.Where(u => u.IsActive).OrderBy(u => u.Role).ToListAsync(ct);
+        return list.Select(AuthController.ToDto).ToList();
+    }
+
     [HttpGet("on-call")]
+    [Authorize(Policy = Policies.Staff)]
     public async Task<ActionResult<IReadOnlyList<UserDto>>> OnCall(CancellationToken ct)
     {
         var list = await users.Users.Where(u => u.IsActive && u.IsOnCall).ToListAsync(ct);

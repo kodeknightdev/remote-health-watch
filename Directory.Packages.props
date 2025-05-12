@@ -24,6 +24,13 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
     <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
   </ItemGroup>
+  <ItemGroup Label="Scheduling">
+    <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.14.0" />
+    <PackageVersion Include="Quartz.Serialization.SystemTextJson" Version="3.14.0" />
+  </ItemGroup>
+  <ItemGroup Label="Notifications">
+    <PackageVersion Include="MailKit" Version="4.11.0" />
+  </ItemGroup>
   <ItemGroup Label="Data">
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.3" />
