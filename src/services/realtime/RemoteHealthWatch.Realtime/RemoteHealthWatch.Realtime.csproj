@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\shared\RemoteHealthWatch.ServiceDefaults\RemoteHealthWatch.ServiceDefaults.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="RemoteHealthWatch.Realtime.Tests" />
+  </ItemGroup>
+</Project>

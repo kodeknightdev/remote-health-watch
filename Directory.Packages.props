@@ -23,6 +23,7 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="9.3.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
     <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.3" />
   </ItemGroup>
   <ItemGroup Label="Scheduling">
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.14.0" />
