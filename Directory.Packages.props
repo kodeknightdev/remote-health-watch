@@ -25,6 +25,9 @@
     <PackageVersion Include="StackExchange.Redis" Version="2.8.31" />
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.3" />
   </ItemGroup>
+  <ItemGroup Label="Gateway">
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
+  </ItemGroup>
   <ItemGroup Label="Scheduling">
     <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.14.0" />
     <PackageVersion Include="Quartz.Serialization.SystemTextJson" Version="3.14.0" />
