@@ -27,6 +27,8 @@ public static class ServiceDefaultsExtensions
             .WriteTo.Console(outputTemplate:
                 "[{Timestamp:HH:mm:ss} {Level:u3}] {service} {SourceContext}: {Message:lj} {Properties:j}{NewLine}{Exception}"));
 
+        builder.AddRemoteHealthWatchTelemetry(serviceName);
+
         builder.Services.AddProblemDetails(o => o.CustomizeProblemDetails = ctx =>
         {
             ctx.ProblemDetails.Extensions["traceId"] = System.Diagnostics.Activity.Current?.TraceId.ToString()
