@@ -35,7 +35,7 @@ builder.Services.AddRemoteHealthWatchMessaging(builder.Configuration, "alerts")
 builder.Services.AddScoped<AlertService>();
 builder.Services.AddScoped<EscalationManager>();
 builder.Services.AddScoped<CareTeamDirectory>();
-builder.Services.AddScoped<AlertNotifier>();
+builder.Services.AddScoped<IAlertNotifier, AlertNotifier>();
 builder.Services.AddScoped<IEscalationScheduler, QuartzEscalationScheduler>();
 builder.Services.AddHostedService<EscalationRecovery>();
 builder.Services.Configure<NotificationOptions>(builder.Configuration.GetSection("Notifications"));

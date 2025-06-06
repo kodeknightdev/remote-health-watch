@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>false</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\shared\RemoteHealthWatch.ServiceDefaults\RemoteHealthWatch.ServiceDefaults.csproj" />
+  </ItemGroup>
+</Project>

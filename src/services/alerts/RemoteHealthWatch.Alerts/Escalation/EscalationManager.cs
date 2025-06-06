@@ -16,7 +16,7 @@ public sealed class EscalationManager(
     AlertsDb db,
     IEventOutbox outbox,
     IEscalationScheduler scheduler,
-    AlertNotifier notifier,
+    IAlertNotifier notifier,
     PostCommitActions afterCommit,
     TimeProvider clock,
     ILogger<EscalationManager> logger)

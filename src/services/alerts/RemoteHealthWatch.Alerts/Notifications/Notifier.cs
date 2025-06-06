@@ -54,6 +54,11 @@ public sealed class LoggingSmsSender(ILogger<LoggingSmsSender> logger) : ISmsSen
     }
 }
 
+public interface IAlertNotifier
+{
+    Task NotifyAsync(Alert alert, string role, bool final, CancellationToken ct);
+}
+
 /// <summary>Works out who to page for a role and sends email plus SMS. Content carries no patient identifiers beyond the surrogate id.</summary>
 public sealed class AlertNotifier(
     CareTeamDirectory careTeams,
@@ -61,7 +66,7 @@ public sealed class AlertNotifier(
     IEmailSender email,
     ISmsSender sms,
     IOptions<NotificationOptions> options,
-    ILogger<AlertNotifier> logger)
+    ILogger<AlertNotifier> logger) : IAlertNotifier
 {
     public async Task NotifyAsync(Alert alert, string role, bool final, CancellationToken ct)
     {
