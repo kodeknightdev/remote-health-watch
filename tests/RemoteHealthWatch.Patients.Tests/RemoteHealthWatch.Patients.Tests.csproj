@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\services\patients\RemoteHealthWatch.Patients\RemoteHealthWatch.Patients.csproj" />
+  </ItemGroup>
+</Project>
