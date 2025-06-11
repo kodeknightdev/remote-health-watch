@@ -6,6 +6,6 @@
     <PackageReference Include="Yarp.ReverseProxy" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="RemoteHealthWatch.Gateway.Tests" />
+    <InternalsVisibleTo Include="RemoteHealthWatch.Platform.Tests" />
   </ItemGroup>
 </Project>

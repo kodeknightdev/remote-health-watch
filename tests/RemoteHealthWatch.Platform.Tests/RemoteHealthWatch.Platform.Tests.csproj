@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\shared\RemoteHealthWatch.ServiceDefaults\RemoteHealthWatch.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\src\gateway\RemoteHealthWatch.Gateway\RemoteHealthWatch.Gateway.csproj" />
+    <ProjectReference Include="..\..\tools\device-sim\RemoteHealthWatch.DeviceSim\RemoteHealthWatch.DeviceSim.csproj" />
+  </ItemGroup>
+</Project>
