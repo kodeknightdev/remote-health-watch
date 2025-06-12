@@ -1,0 +1,12 @@
+**/bin
+**/obj
+**/node_modules
+**/.angular
+**/dist
+**/__pycache__
+**/.pytest_cache
+**/.venv
+**/TestResults
+.git
+.env
+tools/seed/out
