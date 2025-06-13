@@ -1,0 +1,280 @@
+name: remote-health-watch
+
+x-dotnet: &dotnet
+  restart: unless-stopped
+  environment: &dotnet-env
+    ASPNETCORE_ENVIRONMENT: Development
+    Jwt__SigningKey: ${JWT_SIGNING_KEY:-local-dev-signing-key-not-for-production-0123456789}
+    Kafka__BootstrapServers: kafka:9092
+    ConnectionStrings__Redis: redis:6379,abortConnect=false
+    Services__PatientsGrpc: http://patients:8081
+    Services__PatientsHttp: http://patients:8080/
+    Services__IdentityHttp: http://identity:8080/
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+  depends_on: &dotnet-deps
+    sqlserver-init:
+      condition: service_completed_successfully
+    kafka-init:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
+
+x-python: &python
+  restart: unless-stopped
+  depends_on: *dotnet-deps
+
+services:
+  # ---------- infrastructure ----------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-CU17-ubuntu-22.04
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Local_sa_Passw0rd!}
+      MSSQL_PID: Developer
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-CU17-ubuntu-22.04
+    platform: linux/amd64
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Local_sa_Passw0rd!}
+      IDENTITY_DB_PASSWORD: ${IDENTITY_DB_PASSWORD:-Identity_dev_Pass1}
+      PATIENTS_DB_PASSWORD: ${PATIENTS_DB_PASSWORD:-Patients_dev_Pass1}
+      DEVICES_DB_PASSWORD: ${DEVICES_DB_PASSWORD:-Devices_dev_Pass1}
+      VITALS_DB_PASSWORD: ${VITALS_DB_PASSWORD:-Vitals_dev_Pass1}
+      ALERTS_DB_PASSWORD: ${ALERTS_DB_PASSWORD:-Alerts_dev_Pass1}
+      RISK_DB_PASSWORD: ${RISK_DB_PASSWORD:-Risk_dev_Pass1}
+      INSIGHTS_DB_PASSWORD: ${INSIGHTS_DB_PASSWORD:-Insights_dev_Pass1}
+    volumes:
+      - ./sqlserver/init.sql:/init/init.sql:ro
+    # sqlcmd picks up the *_DB_PASSWORD variables from the environment for $(...) substitution
+    entrypoint: ["/opt/mssql-tools18/bin/sqlcmd", "-C", "-S", "sqlserver", "-U", "sa", "-P", "${MSSQL_SA_PASSWORD:-Local_sa_Passw0rd!}", "-b", "-i", "/init/init.sql"]
+    restart: "no"
+
+  kafka:
+    image: apache/kafka:3.9.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_NUM_PARTITIONS: 6
+    volumes:
+      - kafkadata:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+
+  kafka-init:
+    image: apache/kafka:3.9.0
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+    volumes:
+      - ./kafka:/scripts:ro
+    entrypoint: ["bash", "/scripts/create-topics.sh"]
+    restart: "no"
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: remote-health-watch
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8085:8080"
+
+  redis:
+    image: redis:7.4.2-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.34.0
+    command: ["azurite-blob", "--blobHost", "0.0.0.0", "--blobPort", "10000", "--skipApiVersionCheck", "--loose"]
+    volumes:
+      - azuritedata:/data
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    platform: linux/amd64
+    ports:
+      - "8025:8025"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.66.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+
+  # ---------- services ----------
+  identity:
+    <<: *dotnet
+    build: { context: .., dockerfile: src/services/identity/Dockerfile }
+    image: remote-health-watch/identity:dev
+    environment:
+      <<: *dotnet-env
+      ConnectionStrings__IdentityDb: Server=sqlserver,1433;Database=rhw_identity;User Id=rhw_identity;Password=${IDENTITY_DB_PASSWORD:-Identity_dev_Pass1};TrustServerCertificate=True
+      Seed__DemoPassword: ${SEED_DEMO_PASSWORD:-Demo@12345}
+
+  patients:
+    <<: *dotnet
+    build: { context: .., dockerfile: src/services/patients/Dockerfile }
+    image: remote-health-watch/patients:dev
+    environment:
+      <<: *dotnet-env
+      Ports__Http: 8080
+      Ports__Grpc: 8081
+      ConnectionStrings__PatientsDb: Server=sqlserver,1433;Database=rhw_patients;User Id=rhw_patients;Password=${PATIENTS_DB_PASSWORD:-Patients_dev_Pass1};TrustServerCertificate=True
+      Enrollment__BaselineHours: ${BASELINE_HOURS:-24}
+
+  devices:
+    <<: *dotnet
+    build: { context: .., dockerfile: src/services/devices/Dockerfile }
+    image: remote-health-watch/devices:dev
+    environment:
+      <<: *dotnet-env
+      ConnectionStrings__DevicesDb: Server=sqlserver,1433;Database=rhw_devices;User Id=rhw_devices;Password=${DEVICES_DB_PASSWORD:-Devices_dev_Pass1};TrustServerCertificate=True
+
+  vitals:
+    <<: *dotnet
+    build: { context: .., dockerfile: src/services/vitals/Dockerfile }
+    image: remote-health-watch/vitals:dev
+    deploy:
+      replicas: ${VITALS_REPLICAS:-1}
+    environment:
+      <<: *dotnet-env
+      ConnectionStrings__VitalsDb: Server=sqlserver,1433;Database=rhw_vitals;User Id=rhw_vitals;Password=${VITALS_DB_PASSWORD:-Vitals_dev_Pass1};TrustServerCertificate=True
+
+  alerts:
+    <<: *dotnet
+    build: { context: .., dockerfile: src/services/alerts/Dockerfile }
+    image: remote-health-watch/alerts:dev
+    environment:
+      <<: *dotnet-env
+      ConnectionStrings__AlertsDb: Server=sqlserver,1433;Database=rhw_alerts;User Id=rhw_alerts;Password=${ALERTS_DB_PASSWORD:-Alerts_dev_Pass1};TrustServerCertificate=True
+      Notifications__SmtpHost: mailhog
+      Notifications__SmtpPort: 1025
+      Notifications__DashboardUrl: http://localhost:4200
+
+  realtime:
+    <<: *dotnet
+    build: { context: .., dockerfile: src/services/realtime/Dockerfile }
+    image: remote-health-watch/realtime:dev
+
+  gateway:
+    <<: *dotnet
+    build: { context: .., dockerfile: src/gateway/Dockerfile }
+    image: remote-health-watch/gateway:dev
+    environment:
+      <<: *dotnet-env
+      ASPNETCORE_ENVIRONMENT: Docker
+      OpenApi__Expose: "true"
+    ports:
+      - "${GATEWAY_PORT:-5000}:8080"
+
+  risk-engine:
+    <<: *python
+    build: { context: ../src/services/risk-engine }
+    image: remote-health-watch/risk-engine:dev
+    environment:
+      RISK_DATABASE_URL: mssql+pyodbc://rhw_risk:${RISK_DB_PASSWORD:-Risk_dev_Pass1}@sqlserver:1433/rhw_risk?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
+      RISK_KAFKA_BOOTSTRAP: kafka:9092
+      RISK_JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-local-dev-signing-key-not-for-production-0123456789}
+      RISK_PATIENTS_URL: http://patients:8080
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+
+  insights:
+    <<: *python
+    build: { context: ../src/services/insights }
+    image: remote-health-watch/insights:dev
+    depends_on:
+      <<: *dotnet-deps
+      azurite:
+        condition: service_started
+    environment:
+      INSIGHTS_DATABASE_URL: mssql+pyodbc://rhw_insights:${INSIGHTS_DB_PASSWORD:-Insights_dev_Pass1}@sqlserver:1433/rhw_insights?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes
+      INSIGHTS_KAFKA_BOOTSTRAP: kafka:9092
+      INSIGHTS_JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:-local-dev-signing-key-not-for-production-0123456789}
+      INSIGHTS_PATIENTS_URL: http://patients:8080
+      # well-known Azurite development account, not a secret
+      INSIGHTS_BLOB_CONNECTION_STRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+
+  frontend:
+    build: { context: ../angular-frontend }
+    image: remote-health-watch/frontend:dev
+    depends_on: [gateway]
+    ports:
+      - "4200:80"
+    restart: unless-stopped
+
+  # ---------- demo data ----------
+  seed:
+    build: { context: .., dockerfile: tools/seed/Dockerfile }
+    image: remote-health-watch/seed:dev
+    depends_on: [gateway, identity, patients, devices]
+    environment:
+      GATEWAY_URL: http://gateway:8080/
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-Demo@12345}
+      SEED_PATIENTS: ${SEED_PATIENTS:-60}
+      SEED_INTERVAL_SECONDS: ${SIM_INTERVAL_SECONDS:-5}
+      SEED_OUT: /seed-out/devices.json
+    volumes:
+      - seedout:/seed-out
+    restart: on-failure
+
+  device-sim:
+    build: { context: .., dockerfile: tools/device-sim/Dockerfile }
+    image: remote-health-watch/device-sim:dev
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    deploy:
+      replicas: ${SIM_REPLICAS:-1}
+    environment:
+      GATEWAY_URL: http://gateway:8080/
+      SIM_DEVICES_FILE: /seed-out/devices.json
+      SIM_DEVICES: ${SIM_DEVICES:-60}
+      SIM_INTERVAL_SECONDS: ${SIM_INTERVAL_SECONDS:-5}
+      SIM_DETERIORATION_MINUTES: ${SIM_DETERIORATION_MINUTES:-30}
+    volumes:
+      - seedout:/seed-out:ro
+    restart: unless-stopped
+
+volumes:
+  sqldata:
+  kafkadata:
+  azuritedata:
+  seedout:

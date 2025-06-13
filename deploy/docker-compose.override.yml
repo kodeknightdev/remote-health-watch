@@ -1,0 +1,27 @@
+# Host ports for poking at individual services and their Scalar UIs during development.
+# vitals gets its own range so `--scale vitals=3` still works.
+services:
+  sqlserver:
+    ports: ["1433:1433"]
+  kafka:
+    ports: ["29092:29092"]
+  redis:
+    ports: ["6379:6379"]
+  azurite:
+    ports: ["10000:10000"]
+  identity:
+    ports: ["5101:8080"]
+  patients:
+    ports: ["5102:8080", "5112:8081"]
+  devices:
+    ports: ["5103:8080"]
+  vitals:
+    ports: ["5114-5116:8080"]
+  alerts:
+    ports: ["5105:8080"]
+  realtime:
+    ports: ["5106:8080"]
+  risk-engine:
+    ports: ["5107:8000"]
+  insights:
+    ports: ["5108:8000"]
