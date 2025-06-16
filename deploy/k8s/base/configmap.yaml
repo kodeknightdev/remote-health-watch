@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: remote-health-watch-config
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  Kafka__BootstrapServers: kafka:9092
+  KAFKA_BOOTSTRAP: kafka:9092
+  ConnectionStrings__Redis: redis:6379,abortConnect=false
+  Services__PatientsGrpc: http://patients:8081
+  Services__PatientsHttp: http://patients:8080/
+  Services__IdentityHttp: http://identity:8080/
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  Notifications__DashboardUrl: https://remotehealthwatch.example.org

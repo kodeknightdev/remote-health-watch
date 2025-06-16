@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: remote-health-watch
+  annotations:
+    # SignalR: long-lived websockets, and sticky sessions for the negotiate + connect pair when it falls back to SSE
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-name: rhw-route
+    nginx.ingress.kubernetes.io/proxy-body-size: 2m
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: remotehealthwatch.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /hubs
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: frontend, port: { name: http } } }

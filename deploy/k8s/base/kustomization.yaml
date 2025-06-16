@@ -1,0 +1,41 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: remote-health-watch
+    includeSelectors: false
+    includeTemplates: true
+
+resources:
+  - configmap.yaml
+  - identity.yaml
+  - patients.yaml
+  - devices.yaml
+  - vitals.yaml
+  - alerts.yaml
+  - realtime.yaml
+  - gateway.yaml
+  - risk-engine.yaml
+  - insights.yaml
+  - frontend.yaml
+  - hpa.yaml
+  - networkpolicies.yaml
+  - ingress.yaml
+
+secretGenerator:
+  - name: remote-health-watch-secrets
+    envs:
+      - secrets.env.example
+
+images:
+  - { name: remote-health-watch/identity, newTag: "1.0.0" }
+  - { name: remote-health-watch/patients, newTag: "1.0.0" }
+  - { name: remote-health-watch/devices, newTag: "1.0.0" }
+  - { name: remote-health-watch/vitals, newTag: "1.0.0" }
+  - { name: remote-health-watch/alerts, newTag: "1.0.0" }
+  - { name: remote-health-watch/realtime, newTag: "1.0.0" }
+  - { name: remote-health-watch/gateway, newTag: "1.0.0" }
+  - { name: remote-health-watch/risk-engine, newTag: "1.0.0" }
+  - { name: remote-health-watch/insights, newTag: "1.0.0" }
+  - { name: remote-health-watch/frontend, newTag: "1.0.0" }

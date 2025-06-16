@@ -1,0 +1,28 @@
+# CPU-based autoscaling for the two services on the ingestion hot path.
+# vitals beyond 12 replicas would sit idle: devices.readings-raw has 12 partitions.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: vitals
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: vitals }
+  minReplicas: 2
+  maxReplicas: 12
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 65 } }
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: devices
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: devices }
+  minReplicas: 1
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 70 } }

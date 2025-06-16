@@ -1,0 +1,58 @@
+# Nothing in the namespace accepts traffic unless a policy below allows it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+# Only the gateway and the static frontend take traffic from the ingress controller.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-controller
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [gateway, frontend] }
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - { port: 8080 }
+        - { port: 80 }
+---
+# Service-to-service: the gateway fans out to everything; services call patients (REST + gRPC) and identity.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: remote-health-watch
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gateway
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-directory-lookups
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [patients, identity] }
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/name, operator: In, values: [devices, vitals, alerts, realtime, risk-engine, insights] }
+      ports:
+        - { port: 8080 }
+        - { port: 8081 }
