@@ -1,0 +1,215 @@
+# Single-replica backing services for a laptop cluster. Not for anything that matters.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+spec:
+  serviceName: kafka
+  replicas: 1
+  selector: { matchLabels: { app.kubernetes.io/name: kafka } }
+  template:
+    metadata: { labels: { app.kubernetes.io/name: kafka, app.kubernetes.io/part-of: remote-health-watch } }
+    spec:
+      containers:
+        - name: kafka
+          image: apache/kafka:3.9.0
+          ports: [{ name: kafka, containerPort: 9092 }]
+          env:
+            - { name: KAFKA_NODE_ID, value: "1" }
+            - { name: KAFKA_PROCESS_ROLES, value: "broker,controller" }
+            - { name: KAFKA_LISTENERS, value: "PLAINTEXT://:9092,CONTROLLER://:9093" }
+            - { name: KAFKA_ADVERTISED_LISTENERS, value: "PLAINTEXT://kafka:9092" }
+            - { name: KAFKA_CONTROLLER_LISTENER_NAMES, value: CONTROLLER }
+            - { name: KAFKA_CONTROLLER_QUORUM_VOTERS, value: "1@localhost:9093" }
+            - { name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR, value: "1" }
+            - { name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR, value: "1" }
+            - { name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR, value: "1" }
+            - { name: KAFKA_AUTO_CREATE_TOPICS_ENABLE, value: "false" }
+          resources: { requests: { cpu: 200m, memory: 512Mi }, limits: { memory: 1Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: kafka }
+spec:
+  selector: { app.kubernetes.io/name: kafka }
+  ports: [{ name: kafka, port: 9092, targetPort: kafka }]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-topics
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: topics
+          image: apache/kafka:3.9.0
+          command: ["bash", "/scripts/create-topics.sh"]
+          env: [{ name: KAFKA_BOOTSTRAP, value: "kafka:9092" }]
+          volumeMounts: [{ name: scripts, mountPath: /scripts }]
+      volumes:
+        - name: scripts
+          configMap: { name: kafka-topics }
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlserver
+spec:
+  serviceName: sqlserver
+  replicas: 1
+  selector: { matchLabels: { app.kubernetes.io/name: sqlserver } }
+  template:
+    metadata: { labels: { app.kubernetes.io/name: sqlserver, app.kubernetes.io/part-of: remote-health-watch } }
+    spec:
+      securityContext: { fsGroup: 10001 }
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-CU17-ubuntu-22.04
+          ports: [{ name: tds, containerPort: 1433 }]
+          env:
+            - { name: ACCEPT_EULA, value: "Y" }
+            - { name: MSSQL_PID, value: Developer }
+            - name: MSSQL_SA_PASSWORD
+              valueFrom: { secretKeyRef: { name: sqlserver-sa, key: password } }
+          resources: { requests: { cpu: 500m, memory: 2Gi }, limits: { memory: 3Gi } }
+          volumeMounts: [{ name: data, mountPath: /var/opt/mssql }]
+  volumeClaimTemplates:
+    - metadata: { name: data }
+      spec: { accessModes: [ReadWriteOnce], resources: { requests: { storage: 5Gi } } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: sqlserver }
+spec:
+  selector: { app.kubernetes.io/name: sqlserver }
+  ports: [{ name: tds, port: 1433, targetPort: tds }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector: { matchLabels: { app.kubernetes.io/name: redis } }
+  template:
+    metadata: { labels: { app.kubernetes.io/name: redis, app.kubernetes.io/part-of: remote-health-watch } }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4.2-alpine
+          args: ["--save", "", "--appendonly", "no"]
+          ports: [{ name: redis, containerPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: redis }
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6379, targetPort: redis }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: azurite
+spec:
+  replicas: 1
+  selector: { matchLabels: { app.kubernetes.io/name: azurite } }
+  template:
+    metadata: { labels: { app.kubernetes.io/name: azurite, app.kubernetes.io/part-of: remote-health-watch } }
+    spec:
+      containers:
+        - name: azurite
+          image: mcr.microsoft.com/azure-storage/azurite:3.34.0
+          args: ["azurite-blob", "--blobHost", "0.0.0.0", "--skipApiVersionCheck", "--loose"]
+          ports: [{ name: blob, containerPort: 10000 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: azurite }
+spec:
+  selector: { app.kubernetes.io/name: azurite }
+  ports: [{ name: blob, port: 10000, targetPort: blob }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailhog
+spec:
+  replicas: 1
+  selector: { matchLabels: { app.kubernetes.io/name: mailhog } }
+  template:
+    metadata: { labels: { app.kubernetes.io/name: mailhog, app.kubernetes.io/part-of: remote-health-watch } }
+    spec:
+      containers:
+        - name: mailhog
+          image: mailhog/mailhog:v1.0.1
+          ports: [{ name: smtp, containerPort: 1025 }, { name: ui, containerPort: 8025 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: mailhog }
+spec:
+  selector: { app.kubernetes.io/name: mailhog }
+  ports: [{ name: smtp, port: 1025, targetPort: smtp }, { name: ui, port: 8025, targetPort: ui }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+spec:
+  replicas: 1
+  selector: { matchLabels: { app.kubernetes.io/name: jaeger } }
+  template:
+    metadata: { labels: { app.kubernetes.io/name: jaeger, app.kubernetes.io/part-of: remote-health-watch } }
+    spec:
+      containers:
+        - name: jaeger
+          image: jaegertracing/all-in-one:1.66.0
+          env: [{ name: COLLECTOR_OTLP_ENABLED, value: "true" }]
+          ports: [{ name: otlp, containerPort: 4317 }, { name: ui, containerPort: 16686 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: jaeger }
+spec:
+  selector: { app.kubernetes.io/name: jaeger }
+  ports: [{ name: otlp, port: 4317, targetPort: otlp }, { name: ui, port: 16686, targetPort: ui }]
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sqlserver-init
+spec:
+  backoffLimit: 20
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: init
+          image: mcr.microsoft.com/mssql/server:2022-CU17-ubuntu-22.04
+          command: ["/bin/sh", "-c", "/opt/mssql-tools18/bin/sqlcmd -C -S sqlserver -U sa -P \"$MSSQL_SA_PASSWORD\" -b -i /init/init.sql"]
+          env:
+            - name: MSSQL_SA_PASSWORD
+              valueFrom: { secretKeyRef: { name: sqlserver-sa, key: password } }
+          envFrom:
+            - secretRef: { name: db-passwords }
+          volumeMounts: [{ name: init, mountPath: /init }]
+      volumes:
+        - name: init
+          configMap: { name: sqlserver-init }
+---
+# the base denies ingress by default; the in-cluster backing services take traffic from anything in the namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-to-dependencies
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [kafka, sqlserver, redis, azurite, mailhog, jaeger] }
+  ingress:
+    - from:
+        - podSelector: {}

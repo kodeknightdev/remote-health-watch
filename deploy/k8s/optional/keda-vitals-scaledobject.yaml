@@ -1,0 +1,24 @@
+# Optional: scale vitals on consumer lag instead of CPU. Needs KEDA (https://keda.sh) in the cluster.
+# Not part of any overlay; apply it next to the overlay and delete the vitals HPA, since the two would fight.
+#   kubectl apply -k deploy/k8s/overlays/prod && kubectl delete hpa vitals -n remote-health-watch
+#   kubectl apply -f deploy/k8s/optional/keda-vitals-scaledobject.yaml -n remote-health-watch
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: vitals
+spec:
+  scaleTargetRef:
+    name: vitals
+  minReplicaCount: 2
+  # one consumer per partition of devices.readings-raw; more replicas would just idle
+  maxReplicaCount: 12
+  pollingInterval: 15
+  cooldownPeriod: 300
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka:9092
+        consumerGroup: vitals
+        topic: devices.readings-raw
+        lagThreshold: "500"
+        offsetResetPolicy: earliest

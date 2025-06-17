@@ -1,0 +1,72 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Local cluster (kind / Docker Desktop): runs its own Kafka, SQL Server, Redis, Azurite, MailHog and Jaeger.
+namespace: remote-health-watch-dev
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - dependencies.yaml
+
+# kustomize won't read outside the overlay, so files/ holds copies of deploy/kafka and deploy/sqlserver;
+# the pipeline fails if they drift
+configMapGenerator:
+  - name: kafka-topics
+    files:
+      - files/create-topics.sh
+      - files/topics.txt
+  - name: sqlserver-init
+    files:
+      - files/init.sql
+
+secretGenerator:
+  - name: sqlserver-sa
+    literals:
+      - password=Local_sa_Passw0rd!
+  - name: db-passwords
+    literals:
+      - IDENTITY_DB_PASSWORD=Identity_dev_Pass1
+      - PATIENTS_DB_PASSWORD=Patients_dev_Pass1
+      - DEVICES_DB_PASSWORD=Devices_dev_Pass1
+      - VITALS_DB_PASSWORD=Vitals_dev_Pass1
+      - ALERTS_DB_PASSWORD=Alerts_dev_Pass1
+      - RISK_DB_PASSWORD=Risk_dev_Pass1
+      - INSIGHTS_DB_PASSWORD=Insights_dev_Pass1
+  - name: remote-health-watch-secrets
+    behavior: replace
+    envs:
+      - secrets.env
+
+patches:
+  - path: config-patch.yaml
+  - target: { kind: Deployment }
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+  - target: { kind: HorizontalPodAutoscaler, name: vitals }
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 3
+  - target: { kind: Ingress, name: remote-health-watch }
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: remotehealthwatch.localtest.me
+
+images:
+  - { name: remote-health-watch/identity, newTag: dev }
+  - { name: remote-health-watch/patients, newTag: dev }
+  - { name: remote-health-watch/devices, newTag: dev }
+  - { name: remote-health-watch/vitals, newTag: dev }
+  - { name: remote-health-watch/alerts, newTag: dev }
+  - { name: remote-health-watch/realtime, newTag: dev }
+  - { name: remote-health-watch/gateway, newTag: dev }
+  - { name: remote-health-watch/risk-engine, newTag: dev }
+  - { name: remote-health-watch/insights, newTag: dev }
+  - { name: remote-health-watch/frontend, newTag: dev }

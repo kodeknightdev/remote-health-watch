@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: remote-health-watch-config
+data:
+  ASPNETCORE_ENVIRONMENT: Production
+  # Event Hubs Kafka endpoint (placeholder namespace); SASL settings come from the mounted secret
+  Kafka__BootstrapServers: remotehealthwatch-ehns.servicebus.windows.net:9093
+  KAFKA_BOOTSTRAP: remotehealthwatch-ehns.servicebus.windows.net:9093
+  ConnectionStrings__Redis: remotehealthwatch-redis.redis.cache.windows.net:6380,ssl=true,abortConnect=false
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability:4317
+  Notifications__DashboardUrl: https://remotehealthwatch.example.org

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: remote-health-watch-config
+data:
+  # Development runs migrations and the demo-staff seed on startup
+  ASPNETCORE_ENVIRONMENT: Development
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+  Notifications__DashboardUrl: http://remotehealthwatch.localtest.me

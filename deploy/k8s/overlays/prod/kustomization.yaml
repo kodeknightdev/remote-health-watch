@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# AKS: managed Azure SQL, Azure Cache for Redis, Event Hubs (Kafka endpoint) and Storage replace the in-cluster pieces.
+# Secrets are mounted from Key Vault by the CSI driver; the generated secret below only exists so the base renders.
+namespace: remote-health-watch
+
+resources:
+  - ../../base
+  - namespace.yaml
+
+patches:
+  - path: config-patch.yaml
+  - path: replicas-patch.yaml
+  - target: { kind: Deployment }
+    patch: |-
+      - op: add
+        path: /spec/template/spec/topologySpreadConstraints
+        value:
+          - maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector: { matchLabels: { app.kubernetes.io/part-of: remote-health-watch } }
+  - target: { kind: Ingress, name: remote-health-watch }
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: remotehealthwatch.example.org
+      - op: add
+        path: /spec/tls
+        value:
+          - hosts: [remotehealthwatch.example.org]
+            secretName: remote-health-watch-tls
+
+images:
+  - { name: remote-health-watch/identity, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/identity, newTag: "1.0.0" }
+  - { name: remote-health-watch/patients, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/patients, newTag: "1.0.0" }
+  - { name: remote-health-watch/devices, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/devices, newTag: "1.0.0" }
+  - { name: remote-health-watch/vitals, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/vitals, newTag: "1.0.0" }
+  - { name: remote-health-watch/alerts, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/alerts, newTag: "1.0.0" }
+  - { name: remote-health-watch/realtime, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/realtime, newTag: "1.0.0" }
+  - { name: remote-health-watch/gateway, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/gateway, newTag: "1.0.0" }
+  - { name: remote-health-watch/risk-engine, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/risk-engine, newTag: "1.0.0" }
+  - { name: remote-health-watch/insights, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/insights, newTag: "1.0.0" }
+  - { name: remote-health-watch/frontend, newName: remotehealthwatchacr.azurecr.io/remote-health-watch/frontend, newTag: "1.0.0" }
