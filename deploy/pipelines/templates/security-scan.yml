@@ -1,0 +1,28 @@
+# Report-only for now: findings show up in the logs but never block a release.
+jobs:
+  - job: Scan
+    displayName: Dependency audit
+    continueOnError: true
+    steps:
+      - task: UseDotNet@2
+        inputs:
+          packageType: sdk
+          useGlobalJson: true
+      - script: |
+          dotnet restore RemoteHealthWatch.sln --locked-mode
+          dotnet list RemoteHealthWatch.sln package --vulnerable --include-transitive
+        displayName: dotnet list package --vulnerable
+        continueOnError: true
+      - script: npm audit --audit-level=high
+        displayName: npm audit
+        workingDirectory: angular-frontend
+        continueOnError: true
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: "3.13"
+      - script: |
+          pip install pip-audit==2.9.0
+          pip-audit -r src/services/risk-engine/requirements.txt
+          pip-audit -r src/services/insights/requirements.txt
+        displayName: pip-audit
+        continueOnError: true

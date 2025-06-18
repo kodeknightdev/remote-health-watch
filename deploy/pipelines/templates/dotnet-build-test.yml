@@ -1,0 +1,32 @@
+jobs:
+  - job: Dotnet
+    displayName: .NET build and test
+    steps:
+      - task: UseDotNet@2
+        displayName: Use .NET SDK from global.json
+        inputs:
+          packageType: sdk
+          useGlobalJson: true
+      - task: Cache@2
+        displayName: NuGet cache
+        inputs:
+          key: 'nuget | "$(Agent.OS)" | **/packages.lock.json'
+          path: $(Pipeline.Workspace)/.nuget/packages
+      - script: dotnet restore RemoteHealthWatch.sln --locked-mode
+        displayName: Restore (locked)
+        env:
+          NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+      - script: dotnet build RemoteHealthWatch.sln -c Release --no-restore
+        displayName: Build
+      # the hosted agent has Docker, so the Testcontainers tests run here too
+      - script: dotnet test RemoteHealthWatch.sln -c Release --no-build --logger trx --collect "XPlat Code Coverage" --results-directory $(Agent.TempDirectory)/tests
+        displayName: Test
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: VSTest
+          testResultsFiles: $(Agent.TempDirectory)/tests/**/*.trx
+      - task: PublishCodeCoverageResults@2
+        condition: succeededOrFailed()
+        inputs:
+          summaryFileLocation: $(Agent.TempDirectory)/tests/**/coverage.cobertura.xml

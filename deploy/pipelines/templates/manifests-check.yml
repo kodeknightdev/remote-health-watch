@@ -1,0 +1,16 @@
+jobs:
+  - job: Manifests
+    displayName: Render manifests
+    steps:
+      - script: |
+          set -e
+          kubectl kustomize deploy/k8s/overlays/dev > $(Agent.TempDirectory)/dev.yaml
+          kubectl kustomize deploy/k8s/overlays/prod > $(Agent.TempDirectory)/prod.yaml
+          docker compose -f deploy/docker-compose.yml config -q
+        displayName: kustomize build and compose config
+      - script: |
+          # the dev overlay vendors these because kustomize won't read outside its folder
+          diff deploy/kafka/create-topics.sh deploy/k8s/overlays/dev/files/create-topics.sh
+          diff deploy/kafka/topics.txt deploy/k8s/overlays/dev/files/topics.txt
+          diff deploy/sqlserver/init.sql deploy/k8s/overlays/dev/files/init.sql
+        displayName: Vendored files in sync

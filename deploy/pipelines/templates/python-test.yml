@@ -1,0 +1,25 @@
+parameters:
+  - name: services
+    type: object
+
+jobs:
+  - ${{ each service in parameters.services }}:
+      - job: Python_${{ replace(service, '-', '_') }}
+        displayName: Python ${{ service }}
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "3.13"
+          - script: |
+              python -m pip install --upgrade pip
+              pip install -r requirements.txt
+            displayName: Install
+            workingDirectory: src/services/${{ service }}
+          - script: python -m pytest -q --junitxml=$(Agent.TempDirectory)/${{ service }}.xml
+            displayName: pytest
+            workingDirectory: src/services/${{ service }}
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: $(Agent.TempDirectory)/${{ service }}.xml

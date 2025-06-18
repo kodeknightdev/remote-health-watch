@@ -1,0 +1,105 @@
+# remote-health-watch CI/CD. Service connections (acr-connection, aks-dev-connection, aks-prod-connection) and the
+# remote-health-watch-common variable group are created in the Azure DevOps project; nothing secret lives in this file.
+trigger:
+  branches:
+    include: [main]
+  paths:
+    include:
+      - src/*
+      - tools/*
+      - tests/*
+      - angular-frontend/*
+      - deploy/*
+      - azure-pipelines.yml
+      - Directory.Packages.props
+    exclude:
+      - docs/*
+      - '**/*.md'
+
+pr:
+  branches:
+    include: [main]
+
+variables:
+  - group: remote-health-watch-common
+  - name: imageTag
+    value: $(Build.BuildNumber)
+  - name: registry
+    value: remotehealthwatchacr.azurecr.io
+
+name: 1.0.$(Date:yyMMdd)$(Rev:.r)
+
+pool:
+  vmImage: ubuntu-24.04
+
+stages:
+  - stage: BuildTest
+    displayName: Build & Test
+    jobs:
+      - template: deploy/pipelines/templates/detect-changes.yml
+      - template: deploy/pipelines/templates/dotnet-build-test.yml
+      - template: deploy/pipelines/templates/python-test.yml
+        parameters:
+          services: [risk-engine, insights]
+      - template: deploy/pipelines/templates/frontend-test.yml
+      - template: deploy/pipelines/templates/manifests-check.yml
+
+  - stage: SecurityScan
+    displayName: Security scan
+    dependsOn: BuildTest
+    jobs:
+      - template: deploy/pipelines/templates/security-scan.yml
+
+  - stage: Images
+    displayName: Images
+    dependsOn: [BuildTest, SecurityScan]
+    condition: and(succeeded('BuildTest'), ne(variables['Build.Reason'], 'PullRequest'))
+    variables:
+      changes: $[ stageDependencies.BuildTest.DetectChanges.outputs['diff.list'] ]
+    jobs:
+      - template: deploy/pipelines/templates/docker-images.yml
+        parameters:
+          images:
+            - { name: identity, dockerfile: src/services/identity/Dockerfile, context: . }
+            - { name: patients, dockerfile: src/services/patients/Dockerfile, context: . }
+            - { name: devices, dockerfile: src/services/devices/Dockerfile, context: . }
+            - { name: vitals, dockerfile: src/services/vitals/Dockerfile, context: . }
+            - { name: alerts, dockerfile: src/services/alerts/Dockerfile, context: . }
+            - { name: realtime, dockerfile: src/services/realtime/Dockerfile, context: . }
+            - { name: gateway, dockerfile: src/gateway/Dockerfile, context: . }
+            - { name: risk-engine, dockerfile: src/services/risk-engine/Dockerfile, context: src/services/risk-engine }
+            - { name: insights, dockerfile: src/services/insights/Dockerfile, context: src/services/insights }
+            - { name: frontend, dockerfile: angular-frontend/Dockerfile, context: angular-frontend }
+
+  - stage: DeployDev
+    displayName: Deploy Dev
+    dependsOn: Images
+    condition: succeeded()
+    jobs:
+      - template: deploy/pipelines/templates/deploy-k8s.yml
+        parameters:
+          environment: remote-health-watch-dev
+          overlay: deploy/k8s/overlays/dev
+          namespace: remote-health-watch-dev
+          serviceConnection: aks-dev-connection
+
+  - stage: SmokeTest
+    displayName: Smoke test
+    dependsOn: DeployDev
+    jobs:
+      - template: deploy/pipelines/templates/smoke-test.yml
+        parameters:
+          baseUrl: $(devBaseUrl)
+
+  - stage: DeployProd
+    displayName: Deploy Prod
+    dependsOn: SmokeTest
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      # the remote-health-watch-prod environment carries the manual approval check
+      - template: deploy/pipelines/templates/deploy-k8s.yml
+        parameters:
+          environment: remote-health-watch-prod
+          overlay: deploy/k8s/overlays/prod
+          namespace: remote-health-watch
+          serviceConnection: aks-prod-connection

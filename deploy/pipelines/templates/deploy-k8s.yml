@@ -1,0 +1,42 @@
+parameters:
+  - name: environment
+    type: string
+  - name: overlay
+    type: string
+  - name: namespace
+    type: string
+  - name: serviceConnection
+    type: string
+
+jobs:
+  - deployment: Deploy
+    displayName: Deploy to ${{ parameters.environment }}
+    environment: ${{ parameters.environment }}
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+            - script: |
+                set -e
+                cd ${{ parameters.overlay }}
+                for svc in identity patients devices vitals alerts realtime gateway risk-engine insights frontend; do
+                  kustomize edit set image remote-health-watch/$svc=$(registry)/remote-health-watch/$svc:$(imageTag)
+                done
+              displayName: Pin image tags
+            - task: KubernetesManifest@0
+              name: bake
+              displayName: Bake with kustomize
+              inputs:
+                action: bake
+                renderType: kustomize
+                kustomizationPath: ${{ parameters.overlay }}
+            - task: KubernetesManifest@0
+              displayName: Apply
+              inputs:
+                action: deploy
+                connectionType: kubernetesServiceConnection
+                kubernetesServiceConnection: ${{ parameters.serviceConnection }}
+                namespace: ${{ parameters.namespace }}
+                manifests: $(bake.manifestsBundle)
+                rolloutStatusTimeout: 600

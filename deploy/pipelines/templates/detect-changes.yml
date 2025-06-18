@@ -1,0 +1,26 @@
+# Path filters per component: lists what changed since the previous commit so the image jobs can skip untouched services.
+jobs:
+  - job: DetectChanges
+    displayName: Detect changed components
+    steps:
+      - checkout: self
+        fetchDepth: 2
+      - bash: |
+          set -euo pipefail
+          files=$(git diff --name-only HEAD~1 HEAD || git ls-files)
+          changed=""
+          add() { changed="$changed $1"; }
+          # shared code, build props or the pipeline itself rebuild everything
+          if echo "$files" | grep -qE '^(src/shared/|Directory\.(Build|Packages)\.props|global\.json|azure-pipelines\.yml|deploy/pipelines/)'; then
+            changed="all"
+          else
+            for s in identity patients devices vitals alerts realtime risk-engine insights; do
+              echo "$files" | grep -q "^src/services/$s/" && add "$s"
+            done
+            echo "$files" | grep -q '^src/gateway/' && add gateway
+            echo "$files" | grep -q '^angular-frontend/' && add frontend
+          fi
+          echo "changed: ${changed:-none}"
+          echo "##vso[task.setvariable variable=list;isOutput=true]${changed:-none}"
+        name: diff
+        displayName: Diff against previous commit

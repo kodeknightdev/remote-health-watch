@@ -1,0 +1,25 @@
+parameters:
+  - name: baseUrl
+    type: string
+
+jobs:
+  - job: Smoke
+    displayName: Smoke test
+    steps:
+      - checkout: none
+      - script: |
+          set -euo pipefail
+          base="${{ parameters.baseUrl }}"
+          for i in $(seq 1 30); do
+            curl -fsS "$base/health" > /dev/null && break
+            sleep 10
+          done
+          curl -fsS "$base/health"
+          # demo login is only seeded in the dev overlay
+          token=$(curl -fsS -X POST "$base/api/auth/login" -H 'Content-Type: application/json' \
+            -d "{\"email\":\"coordinator@remotehealthwatch.local\",\"password\":\"$SEED_DEMO_PASSWORD\"}" | jq -r .accessToken)
+          curl -fsS -H "Authorization: Bearer $token" "$base/api/patients" | jq length
+          curl -fsS -H "Authorization: Bearer $token" "$base/api/alerts?status=open" | jq length
+        displayName: Health, login, patient list
+        env:
+          SEED_DEMO_PASSWORD: $(seedDemoPassword)

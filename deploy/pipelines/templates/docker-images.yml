@@ -1,0 +1,22 @@
+parameters:
+  - name: images
+    type: object
+
+jobs:
+  - ${{ each image in parameters.images }}:
+      - job: Image_${{ replace(image.name, '-', '_') }}
+        displayName: Image ${{ image.name }}
+        # changes is "all", "none" or a space separated list from DetectChanges
+        condition: or(eq(variables['changes'], 'all'), contains(variables['changes'], '${{ image.name }}'))
+        steps:
+          - task: Docker@2
+            displayName: Build and push ${{ image.name }}
+            inputs:
+              command: buildAndPush
+              containerRegistry: acr-connection
+              repository: remote-health-watch/${{ image.name }}
+              Dockerfile: ${{ image.dockerfile }}
+              buildContext: ${{ image.context }}
+              tags: |
+                $(imageTag)
+                latest-main
