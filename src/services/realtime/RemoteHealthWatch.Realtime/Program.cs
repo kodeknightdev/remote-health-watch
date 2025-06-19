@@ -17,6 +17,10 @@ var signalr = builder.Services.AddSignalR(o =>
 {
     o.EnableDetailedErrors = builder.Environment.IsDevelopment();
     o.KeepAliveInterval = TimeSpan.FromSeconds(15);
+}).AddJsonProtocol(o =>
+{
+    // the dashboard keys tiles and badges by enum name, same as the REST APIs
+    o.PayloadSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 });
 var redis = builder.Configuration.GetConnectionString("Redis");
 // the backplane lets any replica's consumer reach clients connected to any other replica
