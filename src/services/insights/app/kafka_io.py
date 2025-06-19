@@ -79,12 +79,12 @@ class ConsumerLoop(threading.Thread):
                     if msg.error().code() not in (KafkaError._PARTITION_EOF, KafkaError.UNKNOWN_TOPIC_OR_PART):
                         log.warning("consume error on %s: %s", self.group, msg.error())
                     continue
-                self._handle(msg)
+                self._process(msg)
                 consumer.store_offsets(msg)
         finally:
             consumer.close()
 
-    def _handle(self, msg) -> None:
+    def _process(self, msg) -> None:
         headers = {k: v.decode() for k, v in (msg.headers() or [])}
         base_topic = headers.get("x-original-topic", msg.topic())
         attempt = int(headers.get("x-attempt", "0"))
