@@ -11,7 +11,7 @@ public sealed partial class PhiRedactionEnricher : ILogEventEnricher
 
     private static readonly HashSet<string> SensitiveNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        "FirstName", "LastName", "FullName", "PatientName", "Name", "DateOfBirth", "Dob", "Mrn",
+        "FirstName", "LastName", "FullName", "PatientName", "DateOfBirth", "Dob", "Mrn",
         "Address", "AddressLine", "Postcode", "Phone", "PhoneNumber", "Email", "NhsNumber", "Password", "ApiKey"
     };
 
