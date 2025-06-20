@@ -21,6 +21,7 @@ public sealed class SimStats
 /// <summary>One simulated device: samples on its interval, buffers while offline, resends on reconnect like real firmware.</summary>
 public sealed class DeviceRunner(SeededDevice device, HttpClient http, SimOptions options, SimStats stats)
 {
+    private string _apiKey = device.ApiKey;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
 
     private readonly Scenario _scenario = Enum.Parse<Scenario>(device.Scenario);
@@ -62,6 +63,18 @@ public sealed class DeviceRunner(SeededDevice device, HttpClient http, SimOption
         } while (await timer.WaitForNextTickAsync(ct));
     }
 
+    private async Task ReloadKeyAsync(CancellationToken ct)
+    {
+        try
+        {
+            var all = JsonSerializer.Deserialize<List<SeededDevice>>(await File.ReadAllTextAsync(options.DevicesFile, ct), Json);
+            if (all?.FirstOrDefault(d => d.DeviceId == device.DeviceId) is { } fresh) _apiKey = fresh.ApiKey;
+        }
+        catch (IOException)
+        {
+        }
+    }
+
     internal bool IsOffline(TimeSpan elapsed) =>
         _scenario == Scenario.Dropout && elapsed.TotalSeconds % options.DropoutCycle.TotalSeconds > options.DropoutCycle.TotalSeconds - options.DropoutLength.TotalSeconds;
 
@@ -92,7 +105,7 @@ public sealed class DeviceRunner(SeededDevice device, HttpClient http, SimOption
         try
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "api/ingest/readings") { Content = JsonContent.Create(batch, options: Json) };
-            request.Headers.Add("X-Device-Key", device.ApiKey);
+            request.Headers.Add("X-Device-Key", _apiKey);
             using var response = await http.SendAsync(request, ct);
             switch (response.StatusCode)
             {
@@ -101,6 +114,12 @@ public sealed class DeviceRunner(SeededDevice device, HttpClient http, SimOption
                     return true;
                 case HttpStatusCode.TooManyRequests:
                     Interlocked.Increment(ref stats.Throttled);
+                    _backlog.Add(batch);
+                    return false;
+                case HttpStatusCode.Unauthorized:
+                    // key was rotated (e.g. the seed ran again); pick up the new one and keep the batch
+                    Interlocked.Increment(ref stats.Rejected);
+                    await ReloadKeyAsync(ct);
                     _backlog.Add(batch);
                     return false;
                 default:

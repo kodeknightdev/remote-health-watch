@@ -32,6 +32,10 @@ nurses = nurses.OrderBy(n => n.Email.StartsWith("nurse@") ? 0 : 1).ThenBy(n => n
 doctors = doctors.OrderBy(d => d.Email.StartsWith("doctor@") ? 0 : 1).ThenBy(d => d.Email).ToList();
 
 var existingDevices = (await api.DevicesAsync(ct)).ToDictionary(d => d.Serial);
+// keys from an earlier run are still valid; rotating them would cut off any simulator already using the file
+var knownKeys = File.Exists(output)
+    ? JsonSerializer.Deserialize<List<SeededDevice>>(await File.ReadAllTextAsync(output, ct), SeedClient.Json)!.ToDictionary(d => d.Serial)
+    : new Dictionary<string, SeededDevice>();
 var seeded = new List<SeededDevice>();
 var rng = new Random(20250519);
 
@@ -45,7 +49,12 @@ for (var i = 0; i < patientCount; i++)
     var last = Names.Last[rng.Next(Names.Last.Length)];
     var dob = new DateOnly(1938, 1, 1).AddDays(rng.Next(0, 365 * 45));
 
-    if (existingDevices.TryGetValue(serial, out var known))
+    if (existingDevices.TryGetValue(serial, out var known) && knownKeys.TryGetValue(serial, out var kept) && known.PatientId == kept.PatientId)
+    {
+        seeded.Add(kept);
+        continue;
+    }
+    if (known is not null)
     {
         // already enrolled on an earlier run; a fresh key is the only way to get a usable secret back
         var rotated = await api.RotateKeyAsync(known.Id, ct);
