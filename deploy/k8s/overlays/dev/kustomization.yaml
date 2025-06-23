@@ -36,7 +36,7 @@ secretGenerator:
   - name: remote-health-watch-secrets
     behavior: replace
     envs:
-      - secrets.env
+      - secrets.env.example
 
 patches:
   - path: config-patch.yaml
