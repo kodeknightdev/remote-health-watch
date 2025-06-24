@@ -84,7 +84,7 @@ async def lifespan(app: FastAPI):
         w.stop()
 
 
-app = FastAPI(title="remote-health-watch insights", version="1.0.0", lifespan=lifespan, docs_url="/scalar", openapi_url="/openapi/v1.json")
+app = FastAPI(title="remote-health-watch insights", version="1.0.0", lifespan=lifespan, docs_url="/docs", openapi_url="/openapi/v1.json")
 app.include_router(router)
 telemetry.configure(settings.service_name, app)
 
