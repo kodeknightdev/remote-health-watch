@@ -95,6 +95,18 @@ Log in with any of these accounts. The password for all of them is `Demo@12345`.
 
 They only exist in the local demo; the password comes from `SEED_DEMO_PASSWORD` in `.env.example`.
 
+## Project layout
+
+```
+src/gateway/            YARP gateway and the patient overview endpoint
+src/services/           identity, patients, devices, vitals, alerts, realtime (.NET), risk-engine, insights (Python)
+src/shared/             contracts, protos and shared service plumbing
+angular-frontend/       clinician dashboard
+tools/                  seeder and device simulator
+tests/                  .NET test projects
+deploy/                 docker compose, kafka topics, sql init, kubernetes, pipeline templates
+```
+
 ## Running tests
 
 ```bash
