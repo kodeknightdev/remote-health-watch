@@ -12,28 +12,69 @@ WEEK = date(2025, 5, 19)
 
 
 def env(data: dict, occurred: str = "2025-05-20T10:00:00+00:00") -> Envelope:
-    return Envelope(id="e", type="t", schema_version=1, occurred_at=occurred, source="test", correlation_id=None, data=data)
+    return Envelope(
+        id="e", type="t", schema_version=1, occurred_at=occurred, source="test", correlation_id=None, data=data
+    )
 
 
 def seed(session):
     f = FactHandlers()
-    f.patients(session, env({"patientId": PATIENT, "enrolledAt": "2025-05-12T08:00:00+00:00",
-                             "plan": {"vitals": ["HeartRate"], "intervalSeconds": 60}}), Topics.PATIENT_ENROLLED)
+    f.patients(
+        session,
+        env(
+            {
+                "patientId": PATIENT,
+                "enrolledAt": "2025-05-12T08:00:00+00:00",
+                "plan": {"vitals": ["HeartRate"], "intervalSeconds": 60},
+            }
+        ),
+        Topics.PATIENT_ENROLLED,
+    )
     for day in range(7):
         for hour in range(0, 24):
             at = datetime(2025, 5, 19 + day, hour, 30, tzinfo=UTC)
-            readings = [{"vital": "HeartRate", "value": 70 + day, "measuredAt": at.isoformat()},
-                        {"vital": "SpO2", "value": 96 - day * 0.5, "measuredAt": at.isoformat()}]
+            readings = [
+                {"vital": "HeartRate", "value": 70 + day, "measuredAt": at.isoformat()},
+                {"vital": "SpO2", "value": 96 - day * 0.5, "measuredAt": at.isoformat()},
+            ]
             for _ in range(60 if hour < 20 else 0):
                 f.readings(session, env({"patientId": PATIENT, "readings": readings}), Topics.READINGS_NORMALIZED)
-    f.scores(session, env({"patientId": PATIENT, "score": 6, "band": "Medium", "computedAt": "2025-05-21T12:00:00+00:00"}),
-             Topics.SCORE_UPDATED)
-    f.alerts(session, env({"alertId": "a1", "patientId": PATIENT, "type": "ThresholdBreach", "severity": "Critical",
-                           "raisedAt": "2025-05-21T12:00:00+00:00"}), Topics.ALERT_RAISED)
-    f.alerts(session, env({"alertId": "a1", "patientId": PATIENT, "from": "NotifiedNurse", "to": "EscalatedDoctor"}),
-             Topics.ALERT_ESCALATED)
-    f.alerts(session, env({"alertId": "a1", "patientId": PATIENT, "at": "2025-05-21T12:04:00+00:00", "secondsToAcknowledge": 240.0,
-                           "severity": "Critical"}), Topics.ALERT_ACKNOWLEDGED)
+    f.scores(
+        session,
+        env({"patientId": PATIENT, "score": 6, "band": "Medium", "computedAt": "2025-05-21T12:00:00+00:00"}),
+        Topics.SCORE_UPDATED,
+    )
+    f.alerts(
+        session,
+        env(
+            {
+                "alertId": "a1",
+                "patientId": PATIENT,
+                "type": "ThresholdBreach",
+                "severity": "Critical",
+                "raisedAt": "2025-05-21T12:00:00+00:00",
+            }
+        ),
+        Topics.ALERT_RAISED,
+    )
+    f.alerts(
+        session,
+        env({"alertId": "a1", "patientId": PATIENT, "from": "NotifiedNurse", "to": "EscalatedDoctor"}),
+        Topics.ALERT_ESCALATED,
+    )
+    f.alerts(
+        session,
+        env(
+            {
+                "alertId": "a1",
+                "patientId": PATIENT,
+                "at": "2025-05-21T12:04:00+00:00",
+                "secondsToAcknowledge": 240.0,
+                "severity": "Critical",
+            }
+        ),
+        Topics.ALERT_ACKNOWLEDGED,
+    )
     session.flush()
 
 
@@ -46,19 +87,48 @@ def test_readings_fold_into_hourly_aggregates(session):
 
 def test_acknowledgement_before_raised_still_lands(session):
     f = FactHandlers()
-    f.alerts(session, env({"alertId": "late", "patientId": PATIENT, "at": "2025-05-21T12:04:00+00:00", "secondsToAcknowledge": 30.0}),
-             Topics.ALERT_ACKNOWLEDGED)
-    f.alerts(session, env({"alertId": "late", "patientId": PATIENT, "type": "Anomaly", "severity": "Medium",
-                           "raisedAt": "2025-05-21T12:03:30+00:00"}), Topics.ALERT_RAISED)
+    f.alerts(
+        session,
+        env({"alertId": "late", "patientId": PATIENT, "at": "2025-05-21T12:04:00+00:00", "secondsToAcknowledge": 30.0}),
+        Topics.ALERT_ACKNOWLEDGED,
+    )
+    f.alerts(
+        session,
+        env(
+            {
+                "alertId": "late",
+                "patientId": PATIENT,
+                "type": "Anomaly",
+                "severity": "Medium",
+                "raisedAt": "2025-05-21T12:03:30+00:00",
+            }
+        ),
+        Topics.ALERT_RAISED,
+    )
     fact = session.get(AlertFact, "late")
     assert fact.severity == "Medium" and fact.seconds_to_ack == 30.0
 
 
 def test_first_nurse_page_is_not_counted_as_escalation(session):
     f = FactHandlers()
-    f.alerts(session, env({"alertId": "x", "patientId": PATIENT, "type": "ThresholdBreach", "severity": "High",
-                           "raisedAt": "2025-05-21T12:00:00+00:00"}), Topics.ALERT_RAISED)
-    f.alerts(session, env({"alertId": "x", "patientId": PATIENT, "from": "Raised", "to": "NotifiedNurse"}), Topics.ALERT_ESCALATED)
+    f.alerts(
+        session,
+        env(
+            {
+                "alertId": "x",
+                "patientId": PATIENT,
+                "type": "ThresholdBreach",
+                "severity": "High",
+                "raisedAt": "2025-05-21T12:00:00+00:00",
+            }
+        ),
+        Topics.ALERT_RAISED,
+    )
+    f.alerts(
+        session,
+        env({"alertId": "x", "patientId": PATIENT, "from": "Raised", "to": "NotifiedNurse"}),
+        Topics.ALERT_ESCALATED,
+    )
     assert session.get(AlertFact, "x").escalations == 0
 
 

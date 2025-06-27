@@ -19,7 +19,10 @@ class PatientFact(Base):
 
 class AlertFact(Base):
     __tablename__ = "alert_facts"
-    __table_args__ = (Index("ix_alert_facts_raised", "raised_at"), Index("ix_alert_facts_patient", "patient_id", "raised_at"))
+    __table_args__ = (
+        Index("ix_alert_facts_raised", "raised_at"),
+        Index("ix_alert_facts_patient", "patient_id", "raised_at"),
+    )
 
     alert_id: Mapped[str] = mapped_column(String(36), primary_key=True)
     patient_id: Mapped[str] = mapped_column(String(36))
@@ -88,4 +91,3 @@ class OutboxEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime)
     published_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
-

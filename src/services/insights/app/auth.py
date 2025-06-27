@@ -33,8 +33,14 @@ def current_user(
     if creds is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing bearer token")
     try:
-        claims = jwt.decode(creds.credentials, settings.jwt_signing_key, algorithms=["HS256"],
-                            audience=settings.jwt_audience, issuer=settings.jwt_issuer, leeway=30)
+        claims = jwt.decode(
+            creds.credentials,
+            settings.jwt_signing_key,
+            algorithms=["HS256"],
+            audience=settings.jwt_audience,
+            issuer=settings.jwt_issuer,
+            leeway=30,
+        )
     except jwt.PyJWTError as ex:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid token") from ex
     role = claims.get("role", "")
@@ -54,11 +60,21 @@ class ServiceToken:
         if self._token and self._exp - now > 60:
             return self._token
         self._exp = now + 300
-        self._token = jwt.encode({
-            "sub": str(uuid.UUID(int=0)), "role": "Service", "name": self.settings.service_name,
-            "iss": self.settings.jwt_issuer, "aud": self.settings.jwt_audience,
-            "iat": int(now), "nbf": int(now), "exp": int(self._exp), "jti": str(uuid.uuid4()),
-        }, self.settings.jwt_signing_key, algorithm="HS256")
+        self._token = jwt.encode(
+            {
+                "sub": str(uuid.UUID(int=0)),
+                "role": "Service",
+                "name": self.settings.service_name,
+                "iss": self.settings.jwt_issuer,
+                "aud": self.settings.jwt_audience,
+                "iat": int(now),
+                "nbf": int(now),
+                "exp": int(self._exp),
+                "jti": str(uuid.uuid4()),
+            },
+            self.settings.jwt_signing_key,
+            algorithm="HS256",
+        )
         return self._token
 
 
@@ -80,14 +96,22 @@ class PatientsClient:
                 last = httpx.HTTPStatusError("server error", request=r.request, response=r)
             except httpx.TransportError as ex:
                 last = ex
-            time.sleep(0.2 * (2 ** attempt))
+            time.sleep(0.2 * (2**attempt))
         raise last  # type: ignore[misc]
 
     def can_access(self, user: User, patient_id: str, action: str, resource: str) -> bool:
-        r = self._request("POST", "/internal/access", json={
-            "userId": user.id, "role": user.role, "patientId": patient_id,
-            "action": action, "resource": resource, "service": self.settings.service_name,
-        })
+        r = self._request(
+            "POST",
+            "/internal/access",
+            json={
+                "userId": user.id,
+                "role": user.role,
+                "patientId": patient_id,
+                "action": action,
+                "resource": resource,
+                "service": self.settings.service_name,
+            },
+        )
         return r.status_code == 200 and r.json().get("allowed", False)
 
     def visible_patients(self, user: User) -> set[str] | None:

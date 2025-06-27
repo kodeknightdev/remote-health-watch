@@ -10,11 +10,27 @@ DEVICE = "0b5b2c4e-1111-4a3a-9d55-1f1a2b3c4d5e"
 
 def batch(at: datetime, hr=72, spo2=97, rr=16, temp=36.8, sbp=125, seq=1, late=False):
     def r(vital, value, value2=None, offset=0):
-        return {"seq": seq * 10 + offset, "vital": vital, "value": value, "value2": value2, "unit": "",
-                "measuredAt": at.isoformat(), "late": late}
-    return {"patientId": PATIENT, "deviceId": DEVICE, "readings": [
-        r("HeartRate", hr, offset=1), r("SpO2", spo2, offset=2), r("RespiratoryRate", rr, offset=3),
-        r("Temperature", temp, offset=4), r("BloodPressure", sbp, 80, offset=5)]}
+        return {
+            "seq": seq * 10 + offset,
+            "vital": vital,
+            "value": value,
+            "value2": value2,
+            "unit": "",
+            "measuredAt": at.isoformat(),
+            "late": late,
+        }
+
+    return {
+        "patientId": PATIENT,
+        "deviceId": DEVICE,
+        "readings": [
+            r("HeartRate", hr, offset=1),
+            r("SpO2", spo2, offset=2),
+            r("RespiratoryRate", rr, offset=3),
+            r("Temperature", temp, offset=4),
+            r("BloodPressure", sbp, 80, offset=5),
+        ],
+    }
 
 
 def test_first_batch_publishes_a_score(session, settings):

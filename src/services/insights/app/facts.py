@@ -38,8 +38,15 @@ class FactHandlers:
         for (vital, hour), values in buckets.items():
             row = s.get(HourlyVital, (patient_id, vital, hour))
             if row is None:
-                row = HourlyVital(patient_id=patient_id, vital=vital, hour=hour, count=0, total=0.0,
-                                  min_value=min(values), max_value=max(values))
+                row = HourlyVital(
+                    patient_id=patient_id,
+                    vital=vital,
+                    hour=hour,
+                    count=0,
+                    total=0.0,
+                    min_value=min(values),
+                    max_value=max(values),
+                )
                 s.add(row)
             row.count += len(values)
             row.total += sum(values)
@@ -63,7 +70,9 @@ class FactHandlers:
         fact = s.get(AlertFact, d["alertId"])
         if fact is None:
             # lifecycle events can overtake alert-raised across partitions of different topics
-            fact = AlertFact(alert_id=d["alertId"], patient_id=d["patientId"], raised_at=naive(_ts(env.occurred_at)), escalations=0)
+            fact = AlertFact(
+                alert_id=d["alertId"], patient_id=d["patientId"], raised_at=naive(_ts(env.occurred_at)), escalations=0
+            )
             s.add(fact)
         if topic == Topics.ALERT_RAISED:
             fact.type = d.get("type", "")

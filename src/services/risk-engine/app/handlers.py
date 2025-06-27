@@ -22,16 +22,27 @@ class RiskHandlers:
         data = envelope.data
         patient_id = data["patientId"]
         if topic == Topics.PATIENT_ENROLLED:
-            self.engine.upsert_profile(s, patient_id, spo2_scale=data.get("spO2Scale", 1),
-                                       on_oxygen=data.get("onSupplementalOxygen", False),
-                                       conditions=data.get("conditions", []), active=True, now=utcnow())
+            self.engine.upsert_profile(
+                s,
+                patient_id,
+                spo2_scale=data.get("spO2Scale", 1),
+                on_oxygen=data.get("onSupplementalOxygen", False),
+                conditions=data.get("conditions", []),
+                active=True,
+                now=utcnow(),
+            )
         elif topic == Topics.THRESHOLDS_CHANGED:
             profile = self.patients.profile(patient_id)
             if profile:
-                self.engine.upsert_profile(s, patient_id, spo2_scale=profile.get("spO2Scale", 1),
-                                           on_oxygen=profile.get("onSupplementalOxygen", False),
-                                           conditions=profile.get("conditions", []),
-                                           active=profile.get("status") != "Discharged", now=utcnow())
+                self.engine.upsert_profile(
+                    s,
+                    patient_id,
+                    spo2_scale=profile.get("spO2Scale", 1),
+                    on_oxygen=profile.get("onSupplementalOxygen", False),
+                    conditions=profile.get("conditions", []),
+                    active=profile.get("status") != "Discharged",
+                    now=utcnow(),
+                )
         elif topic == Topics.PATIENT_DISCHARGED:
             self.engine.deactivate(s, patient_id, utcnow())
         return []

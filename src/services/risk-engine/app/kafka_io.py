@@ -28,8 +28,17 @@ def stage(s: Session, events: list[Outgoing], source: str) -> None:
     traceparent = telemetry.current_traceparent()
     for e in events:
         event_id, payload = e.envelope(source)
-        s.add(OutboxEvent(id=event_id, topic=e.topic, key=e.key, payload=payload, traceparent=traceparent,
-                          created_at=db.naive(db.utcnow()), attempts=0))
+        s.add(
+            OutboxEvent(
+                id=event_id,
+                topic=e.topic,
+                key=e.key,
+                payload=payload,
+                traceparent=traceparent,
+                created_at=db.naive(db.utcnow()),
+                attempts=0,
+            )
+        )
 
 
 def run_once(s: Session, event_id: str, consumer: str, work: Callable[[], None]) -> bool:
@@ -41,8 +50,19 @@ def run_once(s: Session, event_id: str, consumer: str, work: Callable[[], None])
 
 
 class ConsumerLoop(threading.Thread):
-    def __init__(self, *, bootstrap: str, group: str, topics: list[str], handler: Handler, source: str,
-                 producer: Producer, retry_lane: bool, max_attempts: int, base_delay: float):
+    def __init__(
+        self,
+        *,
+        bootstrap: str,
+        group: str,
+        topics: list[str],
+        handler: Handler,
+        source: str,
+        producer: Producer,
+        retry_lane: bool,
+        max_attempts: int,
+        base_delay: float,
+    ):
         super().__init__(daemon=True, name=f"{group}{'-retry' if retry_lane else ''}")
         self.group = group + ("-retry" if retry_lane else "")
         self.topics = [t + Topics.RETRY_SUFFIX for t in topics] if retry_lane else topics
@@ -60,14 +80,16 @@ class ConsumerLoop(threading.Thread):
         self._halt.set()
 
     def run(self) -> None:
-        consumer = Consumer({
-            "bootstrap.servers": self.bootstrap,
-            "group.id": self.group,
-            "auto.offset.reset": "earliest",
-            "enable.auto.commit": True,
-            "enable.auto.offset.store": False,
-            "partition.assignment.strategy": "cooperative-sticky",
-        })
+        consumer = Consumer(
+            {
+                "bootstrap.servers": self.bootstrap,
+                "group.id": self.group,
+                "auto.offset.reset": "earliest",
+                "enable.auto.commit": True,
+                "enable.auto.offset.store": False,
+                "partition.assignment.strategy": "cooperative-sticky",
+            }
+        )
         consumer.subscribe(self.topics)
         log.info("consumer %s listening on %s", self.group, ",".join(self.topics))
         try:
@@ -105,8 +127,10 @@ class ConsumerLoop(threading.Thread):
                 return
             try:
                 with db.session() as s:
+
                     def work():
                         stage(s, self.handler(s, envelope, base_topic), self.source)
+
                     run_once(s, envelope.id, self.consumer_name, work)
             except IntegrityError:
                 # another replica committed the same event first
@@ -115,8 +139,15 @@ class ConsumerLoop(threading.Thread):
                 span.record_exception(ex)
                 nxt = attempt + 1
                 target = base_topic + (Topics.DLQ_SUFFIX if nxt >= self.max_attempts else Topics.RETRY_SUFFIX)
-                log.warning("handler %s failed for %s %s (attempt %s), routing to %s: %s",
-                            self.consumer_name, envelope.type, envelope.id, nxt, target, ex)
+                log.warning(
+                    "handler %s failed for %s %s (attempt %s), routing to %s: %s",
+                    self.consumer_name,
+                    envelope.type,
+                    envelope.id,
+                    nxt,
+                    target,
+                    ex,
+                )
                 self._forward(target, msg, headers, nxt, str(ex))
 
     def _forward(self, topic: str, msg, headers: dict[str, str], attempt: int, error: str) -> None:
@@ -154,10 +185,16 @@ class OutboxRelay(threading.Thread):
 
     def relay_once(self) -> int:
         with db.session() as s:
-            rows = s.execute(
-                select(OutboxEvent).where(OutboxEvent.published_at.is_(None), OutboxEvent.attempts < 20)
-                .order_by(OutboxEvent.created_at).limit(self.batch)
-            ).scalars().all()
+            rows = (
+                s.execute(
+                    select(OutboxEvent)
+                    .where(OutboxEvent.published_at.is_(None), OutboxEvent.attempts < 20)
+                    .order_by(OutboxEvent.created_at)
+                    .limit(self.batch)
+                )
+                .scalars()
+                .all()
+            )
             if not rows:
                 return 0
             failures: dict[str, str] = {}
@@ -166,14 +203,16 @@ class OutboxRelay(threading.Thread):
                 def cb(err, _msg):
                     if err is not None:
                         failures[row_id] = str(err)
+
                 return cb
 
             for row in rows:
                 headers = [("event-id", row.id)]
                 if row.traceparent:
                     headers.append(("traceparent", row.traceparent))
-                self.producer.produce(row.topic, key=row.key, value=row.payload, headers=headers,
-                                      on_delivery=on_delivery(row.id))
+                self.producer.produce(
+                    row.topic, key=row.key, value=row.payload, headers=headers, on_delivery=on_delivery(row.id)
+                )
             self.producer.flush(15)
             now = db.naive(db.utcnow())
             ok = [r.id for r in rows if r.id not in failures]
@@ -186,14 +225,16 @@ class OutboxRelay(threading.Thread):
 
 
 def make_producer(bootstrap: str, client_id: str) -> Producer:
-    return Producer({
-        "bootstrap.servers": bootstrap,
-        "client.id": client_id,
-        "enable.idempotence": True,
-        "acks": "all",
-        "linger.ms": 5,
-        "compression.type": "lz4",
-    })
+    return Producer(
+        {
+            "bootstrap.servers": bootstrap,
+            "client.id": client_id,
+            "enable.idempotence": True,
+            "acks": "all",
+            "linger.ms": 5,
+            "compression.type": "lz4",
+        }
+    )
 
 
 def new_id() -> str:

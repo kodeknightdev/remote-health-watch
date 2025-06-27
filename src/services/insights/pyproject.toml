@@ -1,0 +1,12 @@
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# FastAPI's Depends()/Query() defaults are the intended pattern
+ignore = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

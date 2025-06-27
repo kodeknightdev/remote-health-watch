@@ -28,8 +28,17 @@ class RiskEngine:
         self._models: dict[str, anomaly.PatientModel] = {}
         self._trend_checked: dict[str, datetime] = {}
 
-    def upsert_profile(self, s: Session, patient_id: str, *, spo2_scale: int, on_oxygen: bool,
-                       conditions: list[str], active: bool, now: datetime) -> None:
+    def upsert_profile(
+        self,
+        s: Session,
+        patient_id: str,
+        *,
+        spo2_scale: int,
+        on_oxygen: bool,
+        conditions: list[str],
+        active: bool,
+        now: datetime,
+    ) -> None:
         profile = s.get(PatientProfile, patient_id)
         if profile is None:
             profile = PatientProfile(patient_id=patient_id)
@@ -57,13 +66,15 @@ class RiskEngine:
             return []
 
         for r in readings:
-            s.add(Observation(
-                patient_id=patient_id,
-                vital=r["vital"],
-                value=float(r["value"]),
-                value2=float(r["value2"]) if r.get("value2") is not None else None,
-                measured_at=naive(_parse(r["measuredAt"])),
-            ))
+            s.add(
+                Observation(
+                    patient_id=patient_id,
+                    vital=r["vital"],
+                    value=float(r["value"]),
+                    value2=float(r["value2"]) if r.get("value2") is not None else None,
+                    measured_at=naive(_parse(r["measuredAt"])),
+                )
+            )
         s.flush()
 
         out: list[Outgoing] = []
@@ -83,8 +94,11 @@ class RiskEngine:
         since = naive(now - timedelta(minutes=self.settings.news2_window_minutes))
         newest = (
             select(Observation.vital, func.max(Observation.measured_at).label("at"))
-            .where(Observation.patient_id == patient_id, Observation.measured_at >= since,
-                   Observation.vital.in_(NEWS2_VITALS))
+            .where(
+                Observation.patient_id == patient_id,
+                Observation.measured_at >= since,
+                Observation.vital.in_(NEWS2_VITALS),
+            )
             .group_by(Observation.vital)
             .subquery()
         )
@@ -122,22 +136,29 @@ class RiskEngine:
         if unchanged:
             return None
 
-        s.add(RiskScore(
-            patient_id=patient_id,
-            score=result.score,
-            band=result.band.value,
-            components=json.dumps(result.components),
-            complete=result.complete,
-            computed_at=naive(now),
-        ))
-        return Outgoing(Topics.SCORE_UPDATED, patient_id, EventTypes.SCORE_UPDATED, {
-            "patientId": patient_id,
-            "score": result.score,
-            "band": result.band.value,
-            "previousBand": previous.band if previous else None,
-            "components": result.components,
-            "computedAt": now.isoformat(),
-        })
+        s.add(
+            RiskScore(
+                patient_id=patient_id,
+                score=result.score,
+                band=result.band.value,
+                components=json.dumps(result.components),
+                complete=result.complete,
+                computed_at=naive(now),
+            )
+        )
+        return Outgoing(
+            Topics.SCORE_UPDATED,
+            patient_id,
+            EventTypes.SCORE_UPDATED,
+            {
+                "patientId": patient_id,
+                "score": result.score,
+                "band": result.band.value,
+                "previousBand": previous.band if previous else None,
+                "components": result.components,
+                "computedAt": now.isoformat(),
+            },
+        )
 
     def _baseline(self, s: Session, patient_id: str, vital: str, now: datetime) -> baseline.Baseline | None:
         row = s.get(BaselineRow, (patient_id, vital))
@@ -146,11 +167,18 @@ class RiskEngine:
 
         start = naive(now - timedelta(hours=self.settings.baseline_hours))
         end = naive(now - BASELINE_GAP)
-        values = s.execute(
-            select(Observation.value).where(
-                Observation.patient_id == patient_id, Observation.vital == vital,
-                Observation.measured_at >= start, Observation.measured_at < end)
-        ).scalars().all()
+        values = (
+            s.execute(
+                select(Observation.value).where(
+                    Observation.patient_id == patient_id,
+                    Observation.vital == vital,
+                    Observation.measured_at >= start,
+                    Observation.measured_at < end,
+                )
+            )
+            .scalars()
+            .all()
+        )
         b = baseline.build_baseline(vital, values, self.settings.baseline_min_samples)
         if b is None:
             return None
@@ -162,17 +190,27 @@ class RiskEngine:
 
     def _cooling_down(self, s: Session, patient_id: str, vital: str, method: str, now: datetime) -> bool:
         since = naive(now - timedelta(minutes=self.settings.anomaly_cooldown_minutes))
-        return s.execute(
-            select(AnomalyRow.id).where(
-                AnomalyRow.patient_id == patient_id, AnomalyRow.vital == vital,
-                AnomalyRow.method == method, AnomalyRow.detected_at >= since).limit(1)
-        ).first() is not None
+        return (
+            s.execute(
+                select(AnomalyRow.id)
+                .where(
+                    AnomalyRow.patient_id == patient_id,
+                    AnomalyRow.vital == vital,
+                    AnomalyRow.method == method,
+                    AnomalyRow.detected_at >= since,
+                )
+                .limit(1)
+            ).first()
+            is not None
+        )
 
     def _zscore_anomalies(self, s: Session, patient_id: str, readings: list[dict], now: datetime) -> list[Outgoing]:
         out = []
         newest_by_vital: dict[str, dict] = {}
         for r in readings:
-            if r["vital"] not in newest_by_vital or _parse(r["measuredAt"]) > _parse(newest_by_vital[r["vital"]]["measuredAt"]):
+            if r["vital"] not in newest_by_vital or _parse(r["measuredAt"]) > _parse(
+                newest_by_vital[r["vital"]]["measuredAt"]
+            ):
                 newest_by_vital[r["vital"]] = r
         for vital, r in newest_by_vital.items():
             b = self._baseline(s, patient_id, vital, now)
@@ -180,17 +218,38 @@ class RiskEngine:
             if not flagged or self._cooling_down(s, patient_id, vital, "zscore", now):
                 continue
             measured = _parse(r["measuredAt"])
-            s.add(AnomalyRow(patient_id=patient_id, vital=vital, value=float(r["value"]), zscore=z, method="zscore",
-                             measured_at=naive(measured), detected_at=naive(now)))
-            out.append(Outgoing(Topics.ANOMALY_DETECTED, patient_id, EventTypes.ANOMALY_DETECTED, {
-                "patientId": patient_id, "vital": vital, "value": float(r["value"]), "zScore": z,
-                "method": "zscore", "measuredAt": measured.isoformat(),
-            }))
+            s.add(
+                AnomalyRow(
+                    patient_id=patient_id,
+                    vital=vital,
+                    value=float(r["value"]),
+                    zscore=z,
+                    method="zscore",
+                    measured_at=naive(measured),
+                    detected_at=naive(now),
+                )
+            )
+            out.append(
+                Outgoing(
+                    Topics.ANOMALY_DETECTED,
+                    patient_id,
+                    EventTypes.ANOMALY_DETECTED,
+                    {
+                        "patientId": patient_id,
+                        "vital": vital,
+                        "value": float(r["value"]),
+                        "zScore": z,
+                        "method": "zscore",
+                        "measuredAt": measured.isoformat(),
+                    },
+                )
+            )
         return out
 
     def _history_rows(self, s: Session, patient_id: str, since: datetime) -> list[tuple[str, float, datetime]]:
         return [
-            (v, val, aware(at)) for v, val, at in s.execute(
+            (v, val, aware(at))
+            for v, val, at in s.execute(
                 select(Observation.vital, Observation.value, Observation.measured_at)
                 .where(Observation.patient_id == patient_id, Observation.measured_at >= naive(since))
                 .order_by(Observation.measured_at)
@@ -201,7 +260,9 @@ class RiskEngine:
         first_seen = s.execute(
             select(func.min(Observation.measured_at)).where(Observation.patient_id == patient_id)
         ).scalar_one_or_none()
-        if not anomaly.has_enough_history(aware(first_seen) if first_seen else None, now, self.settings.iforest_min_hours):
+        if not anomaly.has_enough_history(
+            aware(first_seen) if first_seen else None, now, self.settings.iforest_min_hours
+        ):
             return None
 
         model = self._models.get(patient_id)
@@ -231,12 +292,30 @@ class RiskEngine:
         vital = worst or "HeartRate"
         if self._cooling_down(s, patient_id, vital, "isolation-forest", now):
             return None
-        s.add(AnomalyRow(patient_id=patient_id, vital=vital, value=float(latest[vital]), zscore=round(worst_z, 2),
-                         method="isolation-forest", measured_at=naive(now), detected_at=naive(now)))
-        return Outgoing(Topics.ANOMALY_DETECTED, patient_id, EventTypes.ANOMALY_DETECTED, {
-            "patientId": patient_id, "vital": vital, "value": float(latest[vital]), "zScore": round(worst_z, 2),
-            "method": "isolation-forest", "measuredAt": now.isoformat(),
-        })
+        s.add(
+            AnomalyRow(
+                patient_id=patient_id,
+                vital=vital,
+                value=float(latest[vital]),
+                zscore=round(worst_z, 2),
+                method="isolation-forest",
+                measured_at=naive(now),
+                detected_at=naive(now),
+            )
+        )
+        return Outgoing(
+            Topics.ANOMALY_DETECTED,
+            patient_id,
+            EventTypes.ANOMALY_DETECTED,
+            {
+                "patientId": patient_id,
+                "vital": vital,
+                "value": float(latest[vital]),
+                "zScore": round(worst_z, 2),
+                "method": "isolation-forest",
+                "measuredAt": now.isoformat(),
+            },
+        )
 
     def _trend(self, s: Session, patient_id: str, now: datetime) -> Outgoing | None:
         last = self._trend_checked.get(patient_id)
@@ -258,15 +337,26 @@ class RiskEngine:
         ).first()
         if recent_flag:
             return None
-        s.add(TrendFlag(patient_id=patient_id, rr_slope=result.rr_slope_per_hour, spo2_slope=result.spo2_slope_per_hour,
-                        detected_at=naive(now)))
-        return Outgoing(Topics.DETERIORATION_TREND, patient_id, EventTypes.DETERIORATION_TREND, {
-            "patientId": patient_id,
-            "respiratoryRateSlopePerHour": result.rr_slope_per_hour,
-            "spO2SlopePerHour": result.spo2_slope_per_hour,
-            "windowHours": int(self.settings.trend_window_hours),
-            "detectedAt": now.isoformat(),
-        })
+        s.add(
+            TrendFlag(
+                patient_id=patient_id,
+                rr_slope=result.rr_slope_per_hour,
+                spo2_slope=result.spo2_slope_per_hour,
+                detected_at=naive(now),
+            )
+        )
+        return Outgoing(
+            Topics.DETERIORATION_TREND,
+            patient_id,
+            EventTypes.DETERIORATION_TREND,
+            {
+                "patientId": patient_id,
+                "respiratoryRateSlopePerHour": result.rr_slope_per_hour,
+                "spO2SlopePerHour": result.spo2_slope_per_hour,
+                "windowHours": int(self.settings.trend_window_hours),
+                "detectedAt": now.isoformat(),
+            },
+        )
 
     def purge(self, s: Session, now: datetime) -> int:
         cutoff = naive(now - timedelta(hours=self.settings.observation_retention_hours))

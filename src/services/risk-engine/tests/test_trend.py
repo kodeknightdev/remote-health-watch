@@ -8,8 +8,10 @@ from app import trend
 def _minutes(hours: float, start_value: float, slope_per_hour: float, noise: float, seed: int):
     rng = np.random.default_rng(seed)
     start = datetime(2025, 5, 5, 6, tzinfo=UTC)
-    return [(start + timedelta(minutes=m), start_value + slope_per_hour * m / 60 + rng.normal(0, noise))
-            for m in range(int(hours * 60))]
+    return [
+        (start + timedelta(minutes=m), start_value + slope_per_hour * m / 60 + rng.normal(0, noise))
+        for m in range(int(hours * 60))
+    ]
 
 
 def test_rising_rr_with_falling_spo2_is_deterioration():

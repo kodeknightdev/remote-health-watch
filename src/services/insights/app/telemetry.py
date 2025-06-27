@@ -13,7 +13,9 @@ def configure(service: str, app=None) -> None:
         return
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 
-    provider = TracerProvider(resource=Resource.create({"service.name": service, "service.namespace": "remote-health-watch"}))
+    provider = TracerProvider(
+        resource=Resource.create({"service.name": service, "service.namespace": "remote-health-watch"})
+    )
     provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter(endpoint=endpoint, insecure=True)))
     trace.set_tracer_provider(provider)
     if app is not None:

@@ -28,7 +28,9 @@ class AzureBlobStore:
         return client
 
     def put(self, name: str, data: bytes, content_type: str) -> None:
-        self._client().upload_blob(name, data, overwrite=True, content_settings=ContentSettings(content_type=content_type))
+        self._client().upload_blob(
+            name, data, overwrite=True, content_settings=ContentSettings(content_type=content_type)
+        )
 
     def get(self, name: str) -> bytes:
         return self._client().download_blob(name).readall()

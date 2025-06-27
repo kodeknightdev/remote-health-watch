@@ -23,9 +23,15 @@ def week_start_for(d: date) -> date:
 def build_report_data(s: Session, patient_id: str, week_start: date) -> pdf.ReportData:
     start = datetime.combine(week_start, datetime.min.time())
     end = start + timedelta(days=7)
-    hourly = s.execute(
-        select(HourlyVital).where(HourlyVital.patient_id == patient_id, HourlyVital.hour >= start, HourlyVital.hour < end)
-    ).scalars().all()
+    hourly = (
+        s.execute(
+            select(HourlyVital).where(
+                HourlyVital.patient_id == patient_id, HourlyVital.hour >= start, HourlyVital.hour < end
+            )
+        )
+        .scalars()
+        .all()
+    )
 
     vitals = []
     for vital in REPORT_VITALS:
@@ -38,8 +44,16 @@ def build_report_data(s: Session, patient_id: str, week_start: date) -> pdf.Repo
             n = sum(h.count for h in day_rows)
             daily.append(round(sum(h.total for h in day_rows) / n, 1) if n else None)
         n = sum(h.count for h in rows)
-        vitals.append(pdf.VitalWeek(vital, daily, min(h.min_value for h in rows), round(sum(h.total for h in rows) / n, 1),
-                                    max(h.max_value for h in rows), n))
+        vitals.append(
+            pdf.VitalWeek(
+                vital,
+                daily,
+                min(h.min_value for h in rows),
+                round(sum(h.total for h in rows) / n, 1),
+                max(h.max_value for h in rows),
+                n,
+            )
+        )
 
     patient = s.get(PatientFact, patient_id)
     interval = patient.interval_seconds if patient else 60
@@ -49,12 +63,25 @@ def build_report_data(s: Session, patient_id: str, week_start: date) -> pdf.Repo
         hours = [h for h in hourly if h.vital == WEAR_VITAL and h.hour.date() == day]
         daily_wear.append(round(sum(wear_fraction(h.count, interval) for h in hours) / 24, 3) if hours else None)
 
-    scores = {d.day: d.max_score for d in s.execute(
-        select(DailyScore).where(DailyScore.patient_id == patient_id, DailyScore.day >= week_start,
-                                 DailyScore.day < week_start + timedelta(days=7))).scalars()}
-    alerts = s.execute(
-        select(AlertFact).where(AlertFact.patient_id == patient_id, AlertFact.raised_at >= start, AlertFact.raised_at < end)
-    ).scalars().all()
+    scores = {
+        d.day: d.max_score
+        for d in s.execute(
+            select(DailyScore).where(
+                DailyScore.patient_id == patient_id,
+                DailyScore.day >= week_start,
+                DailyScore.day < week_start + timedelta(days=7),
+            )
+        ).scalars()
+    }
+    alerts = (
+        s.execute(
+            select(AlertFact).where(
+                AlertFact.patient_id == patient_id, AlertFact.raised_at >= start, AlertFact.raised_at < end
+            )
+        )
+        .scalars()
+        .all()
+    )
     acked = [a.seconds_to_ack / 60 for a in alerts if a.seconds_to_ack is not None]
     by_severity = Counter(a.severity or "Unknown" for a in alerts)
     order = ["Critical", "High", "Medium", "Low", "Info", "Unknown"]
@@ -72,8 +99,9 @@ def build_report_data(s: Session, patient_id: str, week_start: date) -> pdf.Repo
     )
 
 
-def generate(s: Session, blobs: BlobStore, container: str, patient_id: str, week_start: date,
-             now: datetime | None = None) -> tuple[Report, Outgoing]:
+def generate(
+    s: Session, blobs: BlobStore, container: str, patient_id: str, week_start: date, now: datetime | None = None
+) -> tuple[Report, Outgoing]:
     now = now or datetime.now(UTC)
     data = build_report_data(s, patient_id, week_start)
     content = pdf.render(data)
@@ -81,14 +109,30 @@ def generate(s: Session, blobs: BlobStore, container: str, patient_id: str, week
     blob_name = f"{patient_id}/{week_start.isoformat()}/{report_id}.pdf"
     blobs.put(blob_name, content, "application/pdf")
 
-    report = Report(report_id=report_id, patient_id=patient_id, week_start=week_start, container=container, blob_name=blob_name,
-                    size_bytes=len(content), generated_at=naive(now))
+    report = Report(
+        report_id=report_id,
+        patient_id=patient_id,
+        week_start=week_start,
+        container=container,
+        blob_name=blob_name,
+        size_bytes=len(content),
+        generated_at=naive(now),
+    )
     s.add(report)
     # claim check: consumers get a pointer to the blob, never the PDF itself
-    event = Outgoing(Topics.REPORT_GENERATED, patient_id, "insights.report-generated", {
-        "reportId": report_id, "patientId": patient_id, "weekStart": week_start.isoformat(),
-        "container": container, "blobName": blob_name, "generatedAt": now.isoformat(),
-    })
+    event = Outgoing(
+        Topics.REPORT_GENERATED,
+        patient_id,
+        "insights.report-generated",
+        {
+            "reportId": report_id,
+            "patientId": patient_id,
+            "weekStart": week_start.isoformat(),
+            "container": container,
+            "blobName": blob_name,
+            "generatedAt": now.isoformat(),
+        },
+    )
     return report, event
 
 

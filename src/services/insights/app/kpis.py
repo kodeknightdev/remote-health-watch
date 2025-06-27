@@ -62,8 +62,9 @@ def compute(s: Session, days: int, now: datetime) -> KpiResult:
 
     intervals = {p.patient_id: p.interval_seconds for p in patients}
     rows = s.execute(
-        select(HourlyVital.patient_id, HourlyVital.count)
-        .where(HourlyVital.vital == WEAR_VITAL, HourlyVital.hour >= since)
+        select(HourlyVital.patient_id, HourlyVital.count).where(
+            HourlyVital.vital == WEAR_VITAL, HourlyVital.hour >= since
+        )
     ).all()
     expected_hours = 0
     for p in active:
@@ -75,7 +76,9 @@ def compute(s: Session, days: int, now: datetime) -> KpiResult:
         enrolled_patients=len(patients),
         active_patients=len(active),
         alerts_per_day=per_day,
-        average_minutes_to_acknowledge=average_minutes_to_ack([a.seconds_to_ack for a in paged if a.seconds_to_ack is not None]),
+        average_minutes_to_acknowledge=average_minutes_to_ack(
+            [a.seconds_to_ack for a in paged if a.seconds_to_ack is not None]
+        ),
         escalation_rate=escalation_rate([a.escalations for a in paged]),
         wear_time_compliance=compliance,
     )

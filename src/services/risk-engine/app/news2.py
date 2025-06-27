@@ -143,7 +143,5 @@ def compute(obs: Observation, spo2_scale: int = 1) -> News2Result:
         components["Temperature"] = score_temperature(obs.temperature)
 
     total = sum(components.values())
-    complete = all(
-        v is not None for v in (obs.respiratory_rate, obs.spo2, obs.systolic, obs.pulse, obs.temperature)
-    )
+    complete = all(v is not None for v in (obs.respiratory_rate, obs.spo2, obs.systolic, obs.pulse, obs.temperature))
     return News2Result(score=total, band=band_for(total, components), components=components, complete=complete)

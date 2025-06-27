@@ -57,10 +57,15 @@ def test_isolation_forest_separates_deteriorating_from_stable():
     assert not flagged
 
     # end of a sepsis-like slide: tachycardic, febrile, hypoxic, hypotensive
-    sick = anomaly.minute_frame([
-        ("HeartRate", 118.0, start), ("SpO2", 89.0, start), ("RespiratoryRate", 26.0, start),
-        ("Temperature", 39.0, start), ("BloodPressure", 94.0, start),
-    ])
+    sick = anomaly.minute_frame(
+        [
+            ("HeartRate", 118.0, start),
+            ("SpO2", 89.0, start),
+            ("RespiratoryRate", 26.0, start),
+            ("Temperature", 39.0, start),
+            ("BloodPressure", 94.0, start),
+        ]
+    )
     flagged, score = anomaly.score_latest(model, sick)
     assert flagged
     assert score < model.threshold

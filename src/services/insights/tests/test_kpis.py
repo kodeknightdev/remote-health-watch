@@ -4,7 +4,11 @@ from app import kpis
 
 
 def test_alerts_per_day_fills_empty_days():
-    raised = [datetime(2025, 5, 20, 9, tzinfo=UTC), datetime(2025, 5, 20, 17, tzinfo=UTC), datetime(2025, 5, 22, 1, tzinfo=UTC)]
+    raised = [
+        datetime(2025, 5, 20, 9, tzinfo=UTC),
+        datetime(2025, 5, 20, 17, tzinfo=UTC),
+        datetime(2025, 5, 22, 1, tzinfo=UTC),
+    ]
     result = kpis.alerts_per_day(raised, date(2025, 5, 19), date(2025, 5, 22))
     assert result == [(date(2025, 5, 19), 0), (date(2025, 5, 20), 2), (date(2025, 5, 21), 0), (date(2025, 5, 22), 1)]
 

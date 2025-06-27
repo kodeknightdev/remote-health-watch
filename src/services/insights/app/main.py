@@ -39,7 +39,9 @@ def weekly_reports(cfg: Settings, blobs: AzureBlobStore, stop: threading.Event) 
             done = 0
             for patient_id in ids:
                 with db.session() as s:
-                    exists = s.execute(select(Report.report_id).where(Report.patient_id == patient_id, Report.week_start == week)).first()
+                    exists = s.execute(
+                        select(Report.report_id).where(Report.patient_id == patient_id, Report.week_start == week)
+                    ).first()
                     if exists:
                         continue
                     _, event = reports.generate(s, blobs, cfg.blob_container, patient_id, week)
@@ -62,17 +64,28 @@ async def lifespan(app: FastAPI):
         producer = kafka_io.make_producer(settings.kafka_bootstrap, settings.service_name)
         app.state.producer = producer
         facts = FactHandlers()
-        common = dict(bootstrap=settings.kafka_bootstrap, source=settings.service_name, producer=producer,
-                      max_attempts=settings.max_delivery_attempts, base_delay=settings.retry_base_delay_seconds)
+        common = dict(
+            bootstrap=settings.kafka_bootstrap,
+            source=settings.service_name,
+            producer=producer,
+            max_attempts=settings.max_delivery_attempts,
+            base_delay=settings.retry_base_delay_seconds,
+        )
         lanes = [
             ("insights-patients", [Topics.PATIENT_ENROLLED, Topics.PATIENT_DISCHARGED], facts.patients),
             ("insights-readings", [Topics.READINGS_NORMALIZED], facts.readings),
             ("insights-scores", [Topics.SCORE_UPDATED], facts.scores),
-            ("insights-alerts", [Topics.ALERT_RAISED, Topics.ALERT_ACKNOWLEDGED, Topics.ALERT_ESCALATED, Topics.ALERT_RESOLVED], facts.alerts),
+            (
+                "insights-alerts",
+                [Topics.ALERT_RAISED, Topics.ALERT_ACKNOWLEDGED, Topics.ALERT_ESCALATED, Topics.ALERT_RESOLVED],
+                facts.alerts,
+            ),
         ]
         for group, topics, handler in lanes:
             for retry in (False, True):
-                workers.append(kafka_io.ConsumerLoop(group=group, topics=topics, handler=handler, retry_lane=retry, **common))
+                workers.append(
+                    kafka_io.ConsumerLoop(group=group, topics=topics, handler=handler, retry_lane=retry, **common)
+                )
         workers.append(kafka_io.OutboxRelay(producer))
         for w in workers:
             w.start()
@@ -84,7 +97,13 @@ async def lifespan(app: FastAPI):
         w.stop()
 
 
-app = FastAPI(title="remote-health-watch insights", version="1.0.0", lifespan=lifespan, docs_url="/docs", openapi_url="/openapi/v1.json")
+app = FastAPI(
+    title="remote-health-watch insights",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/docs",
+    openapi_url="/openapi/v1.json",
+)
 app.include_router(router)
 telemetry.configure(settings.service_name, app)
 
@@ -115,4 +134,6 @@ def health():
         except Exception as ex:
             checks["kafka"] = f"Unhealthy: {ex.__class__.__name__}"
     healthy = all(v == "Healthy" for v in checks.values())
-    return JSONResponse({"status": "Healthy" if healthy else "Unhealthy", "checks": checks}, status_code=200 if healthy else 503)
+    return JSONResponse(
+        {"status": "Healthy" if healthy else "Unhealthy", "checks": checks}, status_code=200 if healthy else 503
+    )
