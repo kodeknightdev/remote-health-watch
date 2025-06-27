@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using RemoteHealthWatch.Contracts.Events;
+using RemoteHealthWatch.ServiceDefaults.Messaging;
 using RemoteHealthWatch.Vitals.Data;
 using RemoteHealthWatch.Vitals.Domain;
-using RemoteHealthWatch.ServiceDefaults.Messaging;
 
 namespace RemoteHealthWatch.Vitals.Services;
 

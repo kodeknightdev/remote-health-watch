@@ -47,7 +47,7 @@ public sealed class OutboxDispatcher<TDb>(
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         // READPAST lets a second replica skip rows another one is already relaying
         var batch = await db.OutboxMessages
-            .FromSqlRaw($"SELECT TOP ({size}) * FROM {table} WITH (UPDLOCK, READPAST, ROWLOCK) WHERE ProcessedAt IS NULL AND Attempts < 20 ORDER BY OccurredAt")
+            .FromSql($"SELECT TOP ({size}) * FROM {table} WITH (UPDLOCK, READPAST, ROWLOCK) WHERE ProcessedAt IS NULL AND Attempts < 20 ORDER BY OccurredAt")
             .ToListAsync(ct);
         if (batch.Count == 0) return 0;
 

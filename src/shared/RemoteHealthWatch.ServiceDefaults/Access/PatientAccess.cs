@@ -78,7 +78,8 @@ public sealed class PatientDataAttribute(string resource, string routeKey = "pat
             {
                 Status = StatusCodes.Status403Forbidden,
                 Title = "Patient is not on your care team"
-            }) { StatusCode = StatusCodes.Status403Forbidden };
+            })
+            { StatusCode = StatusCodes.Status403Forbidden };
             return;
         }
         await next();

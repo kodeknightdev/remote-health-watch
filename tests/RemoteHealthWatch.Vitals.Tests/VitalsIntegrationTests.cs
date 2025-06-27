@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
-using StackExchange.Redis;
-using Testcontainers.MsSql;
-using Testcontainers.Redis;
 using RemoteHealthWatch.Contracts;
 using RemoteHealthWatch.Contracts.Events;
 using RemoteHealthWatch.ServiceDefaults.Messaging;
 using RemoteHealthWatch.TestSupport;
 using RemoteHealthWatch.Vitals.Data;
 using RemoteHealthWatch.Vitals.Services;
+using StackExchange.Redis;
+using Testcontainers.MsSql;
+using Testcontainers.Redis;
 
 namespace RemoteHealthWatch.Vitals.Tests;
 

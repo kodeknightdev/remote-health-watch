@@ -41,17 +41,17 @@ public sealed class KafkaConsumerHost(
         var group = registration.RetryLane ? registration.Group + "-retry" : registration.Group;
 
         using var consumer = new ConsumerBuilder<string, string>(new ConsumerConfig
-            {
-                BootstrapServers = options.Value.BootstrapServers,
-                GroupId = group,
-                ClientId = $"{group}-{Environment.MachineName}",
-                AutoOffsetReset = AutoOffsetReset.Earliest,
-                EnableAutoCommit = true,
-                // offsets are stored only after the handler finished, so a crash replays rather than skips
-                EnableAutoOffsetStore = false,
-                AllowAutoCreateTopics = false,
-                PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky
-            })
+        {
+            BootstrapServers = options.Value.BootstrapServers,
+            GroupId = group,
+            ClientId = $"{group}-{Environment.MachineName}",
+            AutoOffsetReset = AutoOffsetReset.Earliest,
+            EnableAutoCommit = true,
+            // offsets are stored only after the handler finished, so a crash replays rather than skips
+            EnableAutoOffsetStore = false,
+            AllowAutoCreateTopics = false,
+            PartitionAssignmentStrategy = PartitionAssignmentStrategy.CooperativeSticky
+        })
             .SetErrorHandler((_, e) => logger.LogWarning("Kafka consumer {Group} error: {Reason}", group, e.Reason))
             .SetPartitionsAssignedHandler((_, parts) =>
                 logger.LogInformation("Consumer {Group} assigned {Partitions}", group, string.Join(",", parts.Select(p => $"{p.Topic}[{p.Partition.Value}]"))))

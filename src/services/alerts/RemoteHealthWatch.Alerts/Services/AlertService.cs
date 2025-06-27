@@ -40,46 +40,46 @@ public sealed class AlertService(AlertsDb db, IEventOutbox outbox, EscalationMan
                 return new RaiseResult(outcome, open);
 
             case CandidateOutcome.UpgradeOpen:
-            {
-                var decision = EscalationStateMachine.Upgrade(open!, candidate.Severity, candidate.Message, now);
-                open!.OccurrenceCount++;
-                open.LastOccurredAt = now;
-                open.Value = candidate.Value ?? open.Value;
-                open.Version = Guid.NewGuid();
-                escalation.Stage(open, decision);
-                outbox.Enqueue(Topics.AlertRaised, open.PatientId, RaisedEvent(open));
-                await db.SaveChangesAsync(ct);
-                afterCommit.Add(c => escalation.ExecuteAsync(open, decision, c));
-                return new RaiseResult(outcome, open);
-            }
+                {
+                    var decision = EscalationStateMachine.Upgrade(open!, candidate.Severity, candidate.Message, now);
+                    open!.OccurrenceCount++;
+                    open.LastOccurredAt = now;
+                    open.Value = candidate.Value ?? open.Value;
+                    open.Version = Guid.NewGuid();
+                    escalation.Stage(open, decision);
+                    outbox.Enqueue(Topics.AlertRaised, open.PatientId, RaisedEvent(open));
+                    await db.SaveChangesAsync(ct);
+                    afterCommit.Add(c => escalation.ExecuteAsync(open, decision, c));
+                    return new RaiseResult(outcome, open);
+                }
 
             default:
-            {
-                var alert = new Alert
                 {
-                    Id = Guid.NewGuid(),
-                    PatientId = candidate.PatientId,
-                    Type = candidate.Type,
-                    Severity = candidate.Severity,
-                    Vital = candidate.Vital,
-                    Metric = candidate.Metric,
-                    Value = candidate.Value,
-                    Message = candidate.Message.Length > 300 ? candidate.Message[..300] : candidate.Message,
-                    DedupKey = key,
-                    Status = AlertStatus.Raised,
-                    RaisedAt = now,
-                    LastOccurredAt = now,
-                    Version = Guid.NewGuid()
-                };
-                var decision = EscalationStateMachine.Start(alert, now);
-                db.Alerts.Add(alert);
-                outbox.Enqueue(Topics.AlertRaised, alert.PatientId, RaisedEvent(alert));
-                escalation.Stage(alert, decision);
-                await db.SaveChangesAsync(ct);
-                AlertMetrics.Raised.Add(1, tags);
-                afterCommit.Add(c => escalation.ExecuteAsync(alert, decision, c));
-                return new RaiseResult(outcome, alert);
-            }
+                    var alert = new Alert
+                    {
+                        Id = Guid.NewGuid(),
+                        PatientId = candidate.PatientId,
+                        Type = candidate.Type,
+                        Severity = candidate.Severity,
+                        Vital = candidate.Vital,
+                        Metric = candidate.Metric,
+                        Value = candidate.Value,
+                        Message = candidate.Message.Length > 300 ? candidate.Message[..300] : candidate.Message,
+                        DedupKey = key,
+                        Status = AlertStatus.Raised,
+                        RaisedAt = now,
+                        LastOccurredAt = now,
+                        Version = Guid.NewGuid()
+                    };
+                    var decision = EscalationStateMachine.Start(alert, now);
+                    db.Alerts.Add(alert);
+                    outbox.Enqueue(Topics.AlertRaised, alert.PatientId, RaisedEvent(alert));
+                    escalation.Stage(alert, decision);
+                    await db.SaveChangesAsync(ct);
+                    AlertMetrics.Raised.Add(1, tags);
+                    afterCommit.Add(c => escalation.ExecuteAsync(alert, decision, c));
+                    return new RaiseResult(outcome, alert);
+                }
         }
     }
 

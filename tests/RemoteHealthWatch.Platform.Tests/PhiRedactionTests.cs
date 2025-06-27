@@ -1,7 +1,7 @@
+using RemoteHealthWatch.ServiceDefaults.Logging;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
-using RemoteHealthWatch.ServiceDefaults.Logging;
 
 namespace RemoteHealthWatch.Platform.Tests;
 

@@ -1,5 +1,5 @@
-using StackExchange.Redis;
 using RemoteHealthWatch.ServiceDefaults.Messaging;
+using StackExchange.Redis;
 
 namespace RemoteHealthWatch.Realtime.Messaging;
 

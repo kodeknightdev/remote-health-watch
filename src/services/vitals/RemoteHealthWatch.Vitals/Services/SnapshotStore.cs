@@ -1,7 +1,7 @@
 using System.Text.Json;
-using StackExchange.Redis;
 using RemoteHealthWatch.Contracts;
 using RemoteHealthWatch.Contracts.Events;
+using StackExchange.Redis;
 
 namespace RemoteHealthWatch.Vitals.Services;
 

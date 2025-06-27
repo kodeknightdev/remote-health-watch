@@ -11,7 +11,12 @@ public class EscalationStateMachineTests
 
     private static Alert NewAlert(AlertSeverity severity = AlertSeverity.Critical) => new()
     {
-        Id = Guid.NewGuid(), PatientId = Guid.NewGuid(), Severity = severity, Status = AlertStatus.Raised, RaisedAt = T0, Message = "SpO2 low"
+        Id = Guid.NewGuid(),
+        PatientId = Guid.NewGuid(),
+        Severity = severity,
+        Status = AlertStatus.Raised,
+        RaisedAt = T0,
+        Message = "SpO2 low"
     };
 
     [Fact]

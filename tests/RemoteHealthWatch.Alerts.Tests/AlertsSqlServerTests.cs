@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
-using Testcontainers.MsSql;
 using RemoteHealthWatch.Alerts.Data;
 using RemoteHealthWatch.Alerts.Domain;
 using RemoteHealthWatch.Alerts.Escalation;
@@ -11,6 +10,7 @@ using RemoteHealthWatch.Contracts;
 using RemoteHealthWatch.Contracts.Events;
 using RemoteHealthWatch.ServiceDefaults.Messaging;
 using RemoteHealthWatch.TestSupport;
+using Testcontainers.MsSql;
 
 namespace RemoteHealthWatch.Alerts.Tests;
 
@@ -90,8 +90,14 @@ public class AlertsSqlServerTests(SqlServerFixture sql) : IClassFixture<SqlServe
         await using var db = sql.NewDb();
         Alert Open() => new()
         {
-            Id = Guid.NewGuid(), PatientId = patient, DedupKey = key, Status = AlertStatus.NotifiedNurse, Message = "x",
-            RaisedAt = _clock.GetUtcNow(), LastOccurredAt = _clock.GetUtcNow(), Version = Guid.NewGuid()
+            Id = Guid.NewGuid(),
+            PatientId = patient,
+            DedupKey = key,
+            Status = AlertStatus.NotifiedNurse,
+            Message = "x",
+            RaisedAt = _clock.GetUtcNow(),
+            LastOccurredAt = _clock.GetUtcNow(),
+            Version = Guid.NewGuid()
         };
         db.Alerts.Add(Open());
         await db.SaveChangesAsync();

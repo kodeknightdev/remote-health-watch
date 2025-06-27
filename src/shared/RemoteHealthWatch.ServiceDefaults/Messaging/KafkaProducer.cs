@@ -13,15 +13,15 @@ public sealed class KafkaProducer : IDisposable
     public KafkaProducer(IOptions<KafkaOptions> options, ServiceIdentity service, ILogger<KafkaProducer> logger)
     {
         _producer = new Lazy<IProducer<string, string>>(() => new ProducerBuilder<string, string>(new ProducerConfig
-            {
-                BootstrapServers = options.Value.BootstrapServers,
-                ClientId = service.Name,
-                EnableIdempotence = true,
-                Acks = Acks.All,
-                LingerMs = 5,
-                CompressionType = CompressionType.Lz4,
-                MessageTimeoutMs = 15000
-            })
+        {
+            BootstrapServers = options.Value.BootstrapServers,
+            ClientId = service.Name,
+            EnableIdempotence = true,
+            Acks = Acks.All,
+            LingerMs = 5,
+            CompressionType = CompressionType.Lz4,
+            MessageTimeoutMs = 15000
+        })
             .SetErrorHandler((_, e) => logger.LogWarning("Kafka producer error: {Reason}", e.Reason))
             .Build());
     }

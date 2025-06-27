@@ -35,8 +35,15 @@ public class EscalationManagerTests
         await using var db = NewDb();
         var alert = new Alert
         {
-            Id = Guid.NewGuid(), PatientId = Guid.NewGuid(), Type = AlertType.ThresholdBreach, Severity = AlertSeverity.Critical,
-            Status = AlertStatus.Raised, RaisedAt = _clock.GetUtcNow(), LastOccurredAt = _clock.GetUtcNow(), DedupKey = "k", Version = Guid.NewGuid()
+            Id = Guid.NewGuid(),
+            PatientId = Guid.NewGuid(),
+            Type = AlertType.ThresholdBreach,
+            Severity = AlertSeverity.Critical,
+            Status = AlertStatus.Raised,
+            RaisedAt = _clock.GetUtcNow(),
+            LastOccurredAt = _clock.GetUtcNow(),
+            DedupKey = "k",
+            Version = Guid.NewGuid()
         };
         var decision = EscalationStateMachine.Start(alert, _clock.GetUtcNow());
         db.Alerts.Add(alert);

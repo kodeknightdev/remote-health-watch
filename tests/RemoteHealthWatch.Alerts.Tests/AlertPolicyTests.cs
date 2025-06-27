@@ -14,7 +14,11 @@ public class AlertPolicyTests
 
     private static Alert Existing(AlertSeverity severity, AlertStatus status, DateTimeOffset? resolvedAt = null) => new()
     {
-        Id = Guid.NewGuid(), PatientId = Patient, Severity = severity, Status = status, ResolvedAt = resolvedAt
+        Id = Guid.NewGuid(),
+        PatientId = Patient,
+        Severity = severity,
+        Status = status,
+        ResolvedAt = resolvedAt
     };
 
     [Fact]
