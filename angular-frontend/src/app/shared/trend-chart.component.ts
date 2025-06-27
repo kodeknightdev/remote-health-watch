@@ -9,7 +9,12 @@ import { VITAL_LABEL } from '../core/vitals';
   imports: [NgxEchartsDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<div echarts class="chart" [options]="options()" [autoResize]="true"></div>`,
-  styles: `.chart { width: 100%; height: 260px; }`,
+  styles: `
+    .chart {
+      width: 100%;
+      height: 260px;
+    }
+  `,
 })
 export class TrendChartComponent {
   readonly trend = input<TrendResponse | null>(null);

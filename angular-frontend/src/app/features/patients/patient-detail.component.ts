@@ -20,8 +20,18 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
 @Component({
   selector: 'rhw-patient-detail',
   imports: [
-    DatePipe, DecimalPipe, FormsModule, RouterLink, MatCardModule, MatButtonToggleModule, MatButtonModule, MatTabsModule, MatInputModule,
-    News2BadgeComponent, TrendChartComponent, VitalTileComponent,
+    DatePipe,
+    DecimalPipe,
+    FormsModule,
+    RouterLink,
+    MatCardModule,
+    MatButtonToggleModule,
+    MatButtonModule,
+    MatTabsModule,
+    MatInputModule,
+    News2BadgeComponent,
+    TrendChartComponent,
+    VitalTileComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -30,8 +40,15 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
         <div class="head">
           <div>
             <h2>{{ p.firstName }} {{ p.lastName }}</h2>
-            <div class="meta">{{ p.mrn }} · {{ p.age }}{{ p.sex }} · {{ p.conditions.join(', ') || 'no conditions' }} · {{ p.status }}
-              @if (p.spO2Scale === 2) { · SpO₂ scale 2 } @if (p.onSupplementalOxygen) { · on O₂ }</div>
+            <div class="meta">
+              {{ p.mrn }} · {{ p.age }}{{ p.sex }} · {{ p.conditions.join(', ') || 'no conditions' }} · {{ p.status }}
+              @if (p.spO2Scale === 2) {
+                · SpO₂ scale 2
+              }
+              @if (p.onSupplementalOxygen) {
+                · on O₂
+              }
+            </div>
           </div>
           <rhw-news2-badge [score]="risk()?.score ?? null" [band]="risk()?.band ?? 'Low'" />
         </div>
@@ -61,10 +78,21 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
             <rhw-trend-chart [trend]="trend()" [thresholds]="thresholds()" />
             @if (o.summary24h?.vitals?.length) {
               <table class="summary">
-                <tr><th>24h</th><th>min</th><th>avg</th><th>max</th><th>readings</th></tr>
+                <tr>
+                  <th>24h</th>
+                  <th>min</th>
+                  <th>avg</th>
+                  <th>max</th>
+                  <th>readings</th>
+                </tr>
                 @for (s of o.summary24h!.vitals; track s.vital) {
-                  <tr><td>{{ label(s.vital) }}</td><td>{{ s.min | number: '1.0-1' }}</td><td>{{ s.avg | number: '1.0-1' }}</td>
-                    <td>{{ s.max | number: '1.0-1' }}</td><td>{{ s.count }}</td></tr>
+                  <tr>
+                    <td>{{ label(s.vital) }}</td>
+                    <td>{{ s.min | number: '1.0-1' }}</td>
+                    <td>{{ s.avg | number: '1.0-1' }}</td>
+                    <td>{{ s.max | number: '1.0-1' }}</td>
+                    <td>{{ s.count }}</td>
+                  </tr>
                 }
               </table>
             }
@@ -73,7 +101,8 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
           <mat-tab label="Alerts ({{ o.openAlerts?.length ?? 0 }})">
             @for (a of o.openAlerts ?? []; track a.id) {
               <a class="alert" [routerLink]="['/alerts', a.id]" [class]="'sev-' + a.severity">
-                <strong>{{ a.severity }}</strong> {{ a.message }} <span class="when">{{ a.raisedAt | date: 'dd MMM HH:mm' }} · {{ a.status }}</span>
+                <strong>{{ a.severity }}</strong> {{ a.message }}
+                <span class="when">{{ a.raisedAt | date: 'dd MMM HH:mm' }} · {{ a.status }}</span>
               </a>
             } @empty {
               <p class="muted">No open alerts.</p>
@@ -82,7 +111,15 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
 
           <mat-tab label="Thresholds">
             <table class="thresholds">
-              <tr><th>Metric</th><th>Low crit</th><th>Low warn</th><th>High warn</th><th>High crit</th><th>Source</th><th></th></tr>
+              <tr>
+                <th>Metric</th>
+                <th>Low crit</th>
+                <th>Low warn</th>
+                <th>High warn</th>
+                <th>High crit</th>
+                <th>Source</th>
+                <th></th>
+              </tr>
               @for (t of thresholds(); track t.metric) {
                 <tr>
                   <td>{{ t.metric }}</td>
@@ -91,7 +128,11 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
                   <td><input type="number" [(ngModel)]="t.highWarning" [disabled]="!canEdit()" /></td>
                   <td><input type="number" [(ngModel)]="t.highCritical" [disabled]="!canEdit()" /></td>
                   <td>{{ t.source }}</td>
-                  <td>@if (canEdit() && t.source === 'Override') { <button mat-button (click)="reset(t.metric)">Reset</button> }</td>
+                  <td>
+                    @if (canEdit() && t.source === 'Override') {
+                      <button mat-button (click)="reset(t.metric)">Reset</button>
+                    }
+                  </td>
                 </tr>
               }
             </table>
@@ -103,9 +144,11 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
           <mat-tab label="Devices">
             @for (d of o.devices ?? []; track d.id) {
               <div class="device">
-                <strong>{{ d.serial }}</strong> {{ d.type }} · fw {{ d.firmware }} · {{ d.status }}
-                · battery {{ d.batteryPercent ?? '–' }}% · last seen {{ d.lastSeenAt ? (d.lastSeenAt | date: 'dd MMM HH:mm:ss') : 'never' }}
-                @if (d.silentSince) { <span class="silent">silent since {{ d.silentSince | date: 'HH:mm' }}</span> }
+                <strong>{{ d.serial }}</strong> {{ d.type }} · fw {{ d.firmware }} · {{ d.status }} · battery {{ d.batteryPercent ?? '–' }}%
+                · last seen {{ d.lastSeenAt ? (d.lastSeenAt | date: 'dd MMM HH:mm:ss') : 'never' }}
+                @if (d.silentSince) {
+                  <span class="silent">silent since {{ d.silentSince | date: 'HH:mm' }}</span>
+                }
               </div>
             } @empty {
               <p class="muted">No devices paired. {{ p.lastPairingError ? 'Last pairing error: ' + p.lastPairingError : '' }}</p>
@@ -114,7 +157,12 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
 
           <mat-tab label="Care team">
             @for (m of p.careTeam; track m.userId) {
-              <div>{{ m.displayName }} · {{ m.role }} @if (m.isPrimary) { (primary) }</div>
+              <div>
+                {{ m.displayName }} · {{ m.role }}
+                @if (m.isPrimary) {
+                  (primary)
+                }
+              </div>
             }
           </mat-tab>
 
@@ -135,19 +183,78 @@ import { VitalTileComponent } from '../../shared/vital-tile.component';
     }
   `,
   styles: `
-    .head { display: flex; justify-content: space-between; align-items: center; }
-    h2 { margin: 0; }
-    .meta, .muted, .when { color: #78909c; font-size: 13px; }
-    .tiles { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
-    .toolbar { display: flex; gap: 12px; margin: 12px 0; flex-wrap: wrap; }
-    .summary, .thresholds { border-collapse: collapse; margin: 12px 0; }
-    .summary td, .summary th, .thresholds td, .thresholds th { padding: 4px 10px; text-align: left; border-bottom: 1px solid #eceff1; }
-    .thresholds input { width: 70px; }
-    .alert { display: block; padding: 8px; margin: 6px 0; border-left: 4px solid #90a4ae; background: #fff; text-decoration: none; color: inherit; }
-    .sev-Critical { border-color: #c62828; } .sev-High { border-color: #ef6c00; } .sev-Medium { border-color: #f9a825; }
-    .degraded { background: #fff3e0; padding: 8px; border-radius: 4px; }
-    .device { padding: 6px 0; }
-    .silent { color: #c62828; margin-left: 8px; }
+    .head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h2 {
+      margin: 0;
+    }
+    .meta,
+    .muted,
+    .when {
+      color: #78909c;
+      font-size: 13px;
+    }
+    .tiles {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      margin: 12px 0;
+      flex-wrap: wrap;
+    }
+    .summary,
+    .thresholds {
+      border-collapse: collapse;
+      margin: 12px 0;
+    }
+    .summary td,
+    .summary th,
+    .thresholds td,
+    .thresholds th {
+      padding: 4px 10px;
+      text-align: left;
+      border-bottom: 1px solid #eceff1;
+    }
+    .thresholds input {
+      width: 70px;
+    }
+    .alert {
+      display: block;
+      padding: 8px;
+      margin: 6px 0;
+      border-left: 4px solid #90a4ae;
+      background: #fff;
+      text-decoration: none;
+      color: inherit;
+    }
+    .sev-Critical {
+      border-color: #c62828;
+    }
+    .sev-High {
+      border-color: #ef6c00;
+    }
+    .sev-Medium {
+      border-color: #f9a825;
+    }
+    .degraded {
+      background: #fff3e0;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    .device {
+      padding: 6px 0;
+    }
+    .silent {
+      color: #c62828;
+      margin-left: 8px;
+    }
   `,
 })
 export class PatientDetailComponent implements OnInit {
@@ -212,9 +319,9 @@ export class PatientDetailComponent implements OnInit {
   }
 
   reset(metric: string): void {
-    this.patientsApi.resetThreshold(this.id(), metric).subscribe(() =>
-      this.patientsApi.get(this.id()).subscribe((p) => this.thresholds.set(p.thresholds.map((t) => ({ ...t })))),
-    );
+    this.patientsApi
+      .resetThreshold(this.id(), metric)
+      .subscribe(() => this.patientsApi.get(this.id()).subscribe((p) => this.thresholds.set(p.thresholds.map((t) => ({ ...t })))));
   }
 
   generateReport(): void {

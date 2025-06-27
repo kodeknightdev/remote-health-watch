@@ -22,7 +22,8 @@ export function sortByRisk(rows: PatientRow[], bands: Record<string, string | un
   return [...rows].sort((a, b) => {
     const s = (b.score ?? -1) - (a.score ?? -1);
     if (s !== 0) return s;
-    const band = (BAND_ORDER[(bands[b.id] ?? 'Low') as keyof typeof BAND_ORDER] ?? 0) -
+    const band =
+      (BAND_ORDER[(bands[b.id] ?? 'Low') as keyof typeof BAND_ORDER] ?? 0) -
       (BAND_ORDER[(bands[a.id] ?? 'Low') as keyof typeof BAND_ORDER] ?? 0);
     return band !== 0 ? band : a.name.localeCompare(b.name);
   });
@@ -30,11 +31,21 @@ export function sortByRisk(rows: PatientRow[], bands: Record<string, string | un
 
 @Component({
   selector: 'rhw-patient-list',
-  imports: [MatTableModule, MatFormFieldModule, MatInputModule, MatChipsModule, MatProgressBarModule, News2BadgeComponent, VitalTileComponent],
+  imports: [
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatChipsModule,
+    MatProgressBarModule,
+    News2BadgeComponent,
+    VitalTileComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="head">
-      <h2>Patients <small>{{ rows().length }}</small></h2>
+      <h2>
+        Patients <small>{{ rows().length }}</small>
+      </h2>
       <mat-form-field appearance="outline" class="filter" subscriptSizing="dynamic">
         <mat-label>Filter</mat-label>
         <input matInput (input)="filter.set($any($event.target).value)" placeholder="name, MRN or condition" />
@@ -80,15 +91,39 @@ export function sortByRisk(rows: PatientRow[], bands: Record<string, string | un
     </table>
   `,
   styles: `
-    .head { display: flex; align-items: center; justify-content: space-between; }
-    h2 small { color: #78909c; font-weight: 400; }
-    .filter { width: 320px; }
-    table { width: 100%; }
-    .row { cursor: pointer; }
-    .row:hover { background: #f0f4ff; }
-    .name { font-weight: 500; }
-    .meta { font-size: 12px; color: #78909c; }
-    .tiles { display: flex; gap: 6px; padding: 6px 0; }
+    .head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    h2 small {
+      color: #78909c;
+      font-weight: 400;
+    }
+    .filter {
+      width: 320px;
+    }
+    table {
+      width: 100%;
+    }
+    .row {
+      cursor: pointer;
+    }
+    .row:hover {
+      background: #f0f4ff;
+    }
+    .name {
+      font-weight: 500;
+    }
+    .meta {
+      font-size: 12px;
+      color: #78909c;
+    }
+    .tiles {
+      display: flex;
+      gap: 6px;
+      padding: 6px 0;
+    }
   `,
 })
 export class PatientListComponent implements OnInit {
@@ -107,8 +142,13 @@ export class PatientListComponent implements OnInit {
     const risk = this.live.risk();
     const f = this.filter().trim().toLowerCase();
     const rows = this.list()
-      .filter((p) => !f || p.name.toLowerCase().includes(f) || p.mrn.toLowerCase().includes(f)
-        || p.conditions.some((c) => c.toLowerCase().includes(f)))
+      .filter(
+        (p) =>
+          !f ||
+          p.name.toLowerCase().includes(f) ||
+          p.mrn.toLowerCase().includes(f) ||
+          p.conditions.some((c) => c.toLowerCase().includes(f)),
+      )
       .map((p) => ({ ...p, score: risk[p.id]?.score ?? null }));
     const bands = Object.fromEntries(Object.entries(risk).map(([id, r]) => [id, r?.band]));
     return sortByRisk(rows, bands);

@@ -11,8 +11,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   if (isAuthCall(req)) return next(req);
 
-  const withToken = (token: string | null) =>
-    token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  const withToken = (token: string | null) => (token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req);
 
   return next(withToken(auth.token())).pipe(
     catchError((err: unknown) => {

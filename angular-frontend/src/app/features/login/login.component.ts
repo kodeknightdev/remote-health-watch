@@ -38,10 +38,25 @@ import { AuthService } from '../../core/auth.service';
     </div>
   `,
   styles: `
-    .wrap { min-height: 100vh; display: grid; place-items: center; background: #eef2f6; }
-    .card { width: 360px; }
-    form { display: flex; flex-direction: column; gap: 4px; margin-top: 16px; }
-    .error { color: #c62828; margin: 0 0 8px; }
+    .wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #eef2f6;
+    }
+    .card {
+      width: 360px;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 16px;
+    }
+    .error {
+      color: #c62828;
+      margin: 0 0 8px;
+    }
   `,
 })
 export class LoginComponent {

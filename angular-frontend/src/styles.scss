@@ -2,13 +2,25 @@
 
 html {
   color-scheme: light;
-  @include mat.theme((
-    color: mat.$azure-palette,
-    typography: Roboto,
-    density: -1,
-  ));
+  @include mat.theme(
+    (
+      color: mat.$azure-palette,
+      typography: Roboto,
+      density: -1,
+    )
+  );
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, 'Helvetica Neue', sans-serif; background: #f5f7fa; }
-code { font-family: 'Roboto Mono', monospace; font-size: 12px; }
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  background: #f5f7fa;
+}
+code {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+}

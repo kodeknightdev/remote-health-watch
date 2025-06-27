@@ -14,8 +14,16 @@ import { LiveService } from '../../core/live.service';
 @Component({
   selector: 'rhw-shell',
   imports: [
-    RouterOutlet, RouterLink, RouterLinkActive, MatToolbarModule, MatSidenavModule, MatListModule, MatIconModule,
-    MatButtonModule, MatBadgeModule, MatSnackBarModule,
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatToolbarModule,
+    MatSidenavModule,
+    MatListModule,
+    MatIconModule,
+    MatButtonModule,
+    MatBadgeModule,
+    MatSnackBarModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -50,19 +58,52 @@ import { LiveService } from '../../core/live.service';
     </mat-sidenav-container>
   `,
   styles: `
-    .bar { position: sticky; top: 0; z-index: 2; gap: 12px; }
-    .brand { font-weight: 600; }
-    .demo { font-size: 12px; opacity: 0.8; }
-    .spacer { flex: 1; }
-    .live { font-size: 12px; }
-    .live.connected { color: #b9f6ca; }
-    .live.reconnecting, .live.connecting { color: #ffe57f; }
-    .live.disconnected { color: #ff8a80; }
-    .latency, .user { font-size: 13px; }
-    .container { height: calc(100vh - 64px); }
-    .nav { width: 200px; }
-    .content { padding: 16px; background: #f5f7fa; }
-    .active { background: rgba(21, 101, 192, 0.08); }
+    .bar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      gap: 12px;
+    }
+    .brand {
+      font-weight: 600;
+    }
+    .demo {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .spacer {
+      flex: 1;
+    }
+    .live {
+      font-size: 12px;
+    }
+    .live.connected {
+      color: #b9f6ca;
+    }
+    .live.reconnecting,
+    .live.connecting {
+      color: #ffe57f;
+    }
+    .live.disconnected {
+      color: #ff8a80;
+    }
+    .latency,
+    .user {
+      font-size: 13px;
+    }
+    .container {
+      height: calc(100vh - 64px);
+    }
+    .nav {
+      width: 200px;
+    }
+    .content {
+      padding: 16px;
+      background: #f5f7fa;
+    }
+    .active {
+      background: rgba(21, 101, 192, 0.08);
+    }
   `,
 })
 export class ShellComponent implements OnInit, OnDestroy {

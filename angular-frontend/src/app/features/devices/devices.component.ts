@@ -21,35 +21,60 @@ import { Device } from '../../core/models';
       <mat-form-field subscriptSizing="dynamic">
         <mat-label>Type</mat-label>
         <mat-select [(ngModel)]="type">
-          @for (t of types; track t) { <mat-option [value]="t">{{ t }}</mat-option> }
+          @for (t of types; track t) {
+            <mat-option [value]="t">{{ t }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
       <mat-form-field subscriptSizing="dynamic"><mat-label>Firmware</mat-label><input matInput [(ngModel)]="firmware" /></mat-form-field>
       <button mat-flat-button color="primary" (click)="register()" [disabled]="!serial">Register</button>
     </div>
     @if (issuedKey()) {
-      <p class="key">Device key (shown once): <code>{{ issuedKey() }}</code></p>
+      <p class="key">
+        Device key (shown once): <code>{{ issuedKey() }}</code>
+      </p>
     }
     <table mat-table [dataSource]="devices()" class="mat-elevation-z1">
-      <ng-container matColumnDef="serial"><th mat-header-cell *matHeaderCellDef>Serial</th><td mat-cell *matCellDef="let d">{{ d.serial }}</td></ng-container>
-      <ng-container matColumnDef="type"><th mat-header-cell *matHeaderCellDef>Type</th><td mat-cell *matCellDef="let d">{{ d.type }} · {{ d.firmware }}</td></ng-container>
+      <ng-container matColumnDef="serial"
+        ><th mat-header-cell *matHeaderCellDef>Serial</th>
+        <td mat-cell *matCellDef="let d">{{ d.serial }}</td></ng-container
+      >
+      <ng-container matColumnDef="type"
+        ><th mat-header-cell *matHeaderCellDef>Type</th>
+        <td mat-cell *matCellDef="let d">{{ d.type }} · {{ d.firmware }}</td></ng-container
+      >
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef>Status</th>
-        <td mat-cell *matCellDef="let d">{{ d.status }} @if (d.silentSince) { <span class="silent">silent</span> }</td>
+        <td mat-cell *matCellDef="let d">
+          {{ d.status }}
+          @if (d.silentSince) {
+            <span class="silent">silent</span>
+          }
+        </td>
       </ng-container>
-      <ng-container matColumnDef="battery"><th mat-header-cell *matHeaderCellDef>Battery</th><td mat-cell *matCellDef="let d">{{ d.batteryPercent ?? '–' }}%</td></ng-container>
+      <ng-container matColumnDef="battery"
+        ><th mat-header-cell *matHeaderCellDef>Battery</th>
+        <td mat-cell *matCellDef="let d">{{ d.batteryPercent ?? '–' }}%</td></ng-container
+      >
       <ng-container matColumnDef="seen">
         <th mat-header-cell *matHeaderCellDef>Last seen</th>
         <td mat-cell *matCellDef="let d">{{ d.lastSeenAt ? (d.lastSeenAt | date: 'dd MMM HH:mm:ss') : 'never' }}</td>
       </ng-container>
-      <ng-container matColumnDef="key"><th mat-header-cell *matHeaderCellDef>Key</th><td mat-cell *matCellDef="let d"><code>{{ d.keyPrefix }}…</code></td></ng-container>
+      <ng-container matColumnDef="key"
+        ><th mat-header-cell *matHeaderCellDef>Key</th>
+        <td mat-cell *matCellDef="let d">
+          <code>{{ d.keyPrefix }}…</code>
+        </td></ng-container
+      >
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let d">
           @if (d.status === 'Available') {
             <input class="pid" placeholder="patient id" #pid /><button mat-button (click)="pair(d, pid.value)">Pair</button>
           }
-          @if (d.status === 'Paired') { <button mat-button (click)="unpair(d)">Unpair</button> }
+          @if (d.status === 'Paired') {
+            <button mat-button (click)="unpair(d)">Unpair</button>
+          }
           @if (d.status !== 'Revoked') {
             <button mat-button (click)="rotate(d)">Rotate key</button>
             <button mat-button color="warn" (click)="revoke(d)">Revoke</button>
@@ -61,11 +86,28 @@ import { Device } from '../../core/models';
     </table>
   `,
   styles: `
-    .register { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
-    .key { background: #fff8e1; padding: 8px; border-radius: 4px; }
-    table { width: 100%; }
-    .silent { color: #c62828; font-size: 12px; margin-left: 4px; }
-    .pid { width: 120px; }
+    .register {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .key {
+      background: #fff8e1;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+    }
+    .silent {
+      color: #c62828;
+      font-size: 12px;
+      margin-left: 4px;
+    }
+    .pid {
+      width: 120px;
+    }
   `,
 })
 export class DevicesComponent implements OnInit {

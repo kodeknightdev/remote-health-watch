@@ -14,26 +14,57 @@ import { Kpis } from '../../core/models';
     <h2>Programme</h2>
     @if (kpis(); as k) {
       <div class="cards">
-        <mat-card><mat-card-content><div class="n">{{ k.enrolledPatients }}</div>enrolled ({{ k.activePatients }} active)</mat-card-content></mat-card>
-        <mat-card><mat-card-content>
-          <div class="n">{{ k.averageMinutesToAcknowledge === null ? '–' : (k.averageMinutesToAcknowledge | number: '1.0-1') }}</div>avg minutes to acknowledge
-        </mat-card-content></mat-card>
-        <mat-card><mat-card-content><div class="n">{{ k.escalationRate | percent: '1.0-1' }}</div>escalation rate</mat-card-content></mat-card>
-        <mat-card><mat-card-content>
-          <div class="n">{{ k.wearTimeCompliance === null ? '–' : (k.wearTimeCompliance | percent: '1.0-0') }}</div>device wear-time compliance
-        </mat-card-content></mat-card>
+        <mat-card
+          ><mat-card-content
+            ><div class="n">{{ k.enrolledPatients }}</div>
+            enrolled ({{ k.activePatients }} active)</mat-card-content
+          ></mat-card
+        >
+        <mat-card
+          ><mat-card-content>
+            <div class="n">{{ k.averageMinutesToAcknowledge === null ? '–' : (k.averageMinutesToAcknowledge | number: '1.0-1') }}</div>
+            avg minutes to acknowledge
+          </mat-card-content></mat-card
+        >
+        <mat-card
+          ><mat-card-content
+            ><div class="n">{{ k.escalationRate | percent: '1.0-1' }}</div>
+            escalation rate</mat-card-content
+          ></mat-card
+        >
+        <mat-card
+          ><mat-card-content>
+            <div class="n">{{ k.wearTimeCompliance === null ? '–' : (k.wearTimeCompliance | percent: '1.0-0') }}</div>
+            device wear-time compliance
+          </mat-card-content></mat-card
+        >
       </div>
-      <mat-card class="chart-card"><mat-card-content><div echarts class="chart" [options]="chart()"></div></mat-card-content></mat-card>
+      <mat-card class="chart-card"
+        ><mat-card-content><div echarts class="chart" [options]="chart()"></div></mat-card-content
+      ></mat-card>
     } @else {
       <p class="muted">Loading programme metrics…</p>
     }
   `,
   styles: `
-    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .n { font-size: 28px; font-weight: 500; }
-    .chart-card { margin-top: 12px; }
-    .chart { height: 280px; }
-    .muted { color: #78909c; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .n {
+      font-size: 28px;
+      font-weight: 500;
+    }
+    .chart-card {
+      margin-top: 12px;
+    }
+    .chart {
+      height: 280px;
+    }
+    .muted {
+      color: #78909c;
+    }
   `,
 })
 export class ProgrammeComponent implements OnInit {

@@ -12,7 +12,10 @@ export const routes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'patients' },
       { path: 'patients', loadComponent: () => import('./features/patients/patient-list.component').then((m) => m.PatientListComponent) },
-      { path: 'patients/:id', loadComponent: () => import('./features/patients/patient-detail.component').then((m) => m.PatientDetailComponent) },
+      {
+        path: 'patients/:id',
+        loadComponent: () => import('./features/patients/patient-detail.component').then((m) => m.PatientDetailComponent),
+      },
       { path: 'alerts', loadComponent: () => import('./features/alerts/alert-inbox.component').then((m) => m.AlertInboxComponent) },
       { path: 'alerts/:id', loadComponent: () => import('./features/alerts/alert-detail.component').then((m) => m.AlertDetailComponent) },
       {

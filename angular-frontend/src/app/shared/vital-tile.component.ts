@@ -27,15 +27,48 @@ import { SparklineComponent } from './sparkline.component';
     </div>
   `,
   styles: `
-    .tile { border: 1px solid #e0e0e0; border-radius: 8px; padding: 6px 8px; min-width: 88px; background: #fff; }
-    .tile.compact { border: none; padding: 0 4px; min-width: 56px; }
-    .tile.stale { opacity: 0.55; }
-    .label { font-size: 11px; color: #607d8b; text-transform: uppercase; letter-spacing: 0.04em; }
-    .value { font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
-    .compact .value { font-size: 15px; }
-    .unit { font-size: 11px; color: #78909c; font-weight: 400; }
-    .at { font-size: 10px; color: #90a4ae; text-align: right; }
-    .empty { color: #b0bec5; }
+    .tile {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 6px 8px;
+      min-width: 88px;
+      background: #fff;
+    }
+    .tile.compact {
+      border: none;
+      padding: 0 4px;
+      min-width: 56px;
+    }
+    .tile.stale {
+      opacity: 0.55;
+    }
+    .label {
+      font-size: 11px;
+      color: #607d8b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .value {
+      font-size: 20px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+    .compact .value {
+      font-size: 15px;
+    }
+    .unit {
+      font-size: 11px;
+      color: #78909c;
+      font-weight: 400;
+    }
+    .at {
+      font-size: 10px;
+      color: #90a4ae;
+      text-align: right;
+    }
+    .empty {
+      color: #b0bec5;
+    }
   `,
 })
 export class VitalTileComponent {

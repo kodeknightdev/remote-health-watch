@@ -35,9 +35,7 @@ export class AuthService {
   }
 
   login(email: string, password: string): Observable<User> {
-    return this.http
-      .post<TokenResponse>('/api/auth/login', { email, password }, { withCredentials: true })
-      .pipe(map((r) => this.apply(r)));
+    return this.http.post<TokenResponse>('/api/auth/login', { email, password }, { withCredentials: true }).pipe(map((r) => this.apply(r)));
   }
 
   /** Single shared refresh so a burst of 401s doesn't rotate the token several times (which would trip reuse detection). */

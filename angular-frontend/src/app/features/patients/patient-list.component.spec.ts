@@ -9,7 +9,14 @@ import { PatientSummary } from '../../core/models';
 import { PatientListComponent, PatientRow, sortByRisk } from './patient-list.component';
 
 const patient = (id: string, name: string): PatientSummary => ({
-  id, name, mrn: 'MRN-' + id, age: 70, sex: 'F', conditions: [], status: 'MonitoringActive', enrolledAt: '2025-05-01T00:00:00Z',
+  id,
+  name,
+  mrn: 'MRN-' + id,
+  age: 70,
+  sex: 'F',
+  conditions: [],
+  status: 'MonitoringActive',
+  enrolledAt: '2025-05-01T00:00:00Z',
 });
 
 describe('sortByRisk', () => {
@@ -30,17 +37,19 @@ describe('PatientListComponent', () => {
     TestBed.configureTestingModule({
       imports: [PatientListComponent],
       providers: [
-        provideHttpClient(), provideRouter([]),
+        provideHttpClient(),
+        provideRouter([]),
         provideNoopAnimations(),
         provideEchartsCore({ echarts: () => import('echarts') }),
         { provide: PatientsApi, useValue: { list: () => of([patient('p1', 'Low Risk'), patient('p2', 'High Risk')]) } },
         {
           provide: RiskApi,
           useValue: {
-            scores: () => of([
-              { patientId: 'p1', score: 1, band: 'Low', components: {}, computedAt: '' },
-              { patientId: 'p2', score: 8, band: 'High', components: {}, computedAt: '' },
-            ]),
+            scores: () =>
+              of([
+                { patientId: 'p1', score: 1, band: 'Low', components: {}, computedAt: '' },
+                { patientId: 'p2', score: 8, band: 'High', components: {}, computedAt: '' },
+              ]),
           },
         },
       ],

@@ -5,7 +5,13 @@ export type MonitoringStatus = 'PendingDevice' | 'BaselineBuilding' | 'Monitorin
 export type AlertSeverity = 'Info' | 'Low' | 'Medium' | 'High' | 'Critical';
 export type AlertStatus = 'Raised' | 'NotifiedNurse' | 'EscalatedDoctor' | 'EscalatedCoordinator' | 'Acknowledged' | 'Resolved';
 export type AlertType =
-  | 'ThresholdBreach' | 'News2BandChange' | 'Anomaly' | 'DeteriorationTrend' | 'DeviceSilent' | 'DeviceUnpaired' | 'PairingFailed';
+  | 'ThresholdBreach'
+  | 'News2BandChange'
+  | 'Anomaly'
+  | 'DeteriorationTrend'
+  | 'DeviceSilent'
+  | 'DeviceUnpaired'
+  | 'PairingFailed';
 
 export const VITALS: VitalType[] = ['HeartRate', 'SpO2', 'RespiratoryRate', 'Temperature', 'BloodPressure', 'Glucose'];
 export const CONDITIONS = ['COPD', 'Hypertension', 'HeartFailure', 'Diabetes', 'PostSurgical', 'Pneumonia'];

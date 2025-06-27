@@ -8,7 +8,9 @@ export const authGuard: CanActivateFn = () => {
   return auth.isAuthenticated() ? true : inject(Router).createUrlTree(['/login']);
 };
 
-export const roleGuard = (...roles: Role[]): CanActivateFn => () => {
-  const auth = inject(AuthService);
-  return auth.hasRole(...roles) ? true : inject(Router).createUrlTree(['/patients']);
-};
+export const roleGuard =
+  (...roles: Role[]): CanActivateFn =>
+  () => {
+    const auth = inject(AuthService);
+    return auth.hasRole(...roles) ? true : inject(Router).createUrlTree(['/patients']);
+  };

@@ -24,37 +24,51 @@ import { CONDITIONS, CareTeamMember, User, VITALS } from '../../core/models';
           <mat-form-field><mat-label>Date of birth</mat-label><input matInput type="date" formControlName="dateOfBirth" /></mat-form-field>
           <mat-form-field>
             <mat-label>Sex</mat-label>
-            <mat-select formControlName="sex"><mat-option value="F">F</mat-option><mat-option value="M">M</mat-option><mat-option value="X">X</mat-option></mat-select>
+            <mat-select formControlName="sex"
+              ><mat-option value="F">F</mat-option><mat-option value="M">M</mat-option><mat-option value="X">X</mat-option></mat-select
+            >
           </mat-form-field>
           <mat-form-field>
             <mat-label>Conditions</mat-label>
             <mat-select formControlName="conditions" multiple>
-              @for (c of conditions; track c) { <mat-option [value]="c">{{ c }}</mat-option> }
+              @for (c of conditions; track c) {
+                <mat-option [value]="c">{{ c }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Monitored vitals</mat-label>
             <mat-select formControlName="vitals" multiple>
-              @for (v of vitals; track v) { <mat-option [value]="v">{{ v }}</mat-option> }
+              @for (v of vitals; track v) {
+                <mat-option [value]="v">{{ v }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
-          <mat-form-field><mat-label>Interval (seconds)</mat-label><input matInput type="number" formControlName="intervalSeconds" /></mat-form-field>
+          <mat-form-field
+            ><mat-label>Interval (seconds)</mat-label><input matInput type="number" formControlName="intervalSeconds"
+          /></mat-form-field>
           <mat-form-field><mat-label>Device serial (optional)</mat-label><input matInput formControlName="deviceSerial" /></mat-form-field>
           <mat-form-field>
             <mat-label>Nurse</mat-label>
             <mat-select formControlName="nurseId">
-              @for (u of nurses(); track u.id) { <mat-option [value]="u.id">{{ u.displayName }}</mat-option> }
+              @for (u of nurses(); track u.id) {
+                <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Doctor</mat-label>
             <mat-select formControlName="doctorId">
-              @for (u of doctors(); track u.id) { <mat-option [value]="u.id">{{ u.displayName }}</mat-option> }
+              @for (u of doctors(); track u.id) {
+                <mat-option [value]="u.id">{{ u.displayName }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
           <mat-checkbox formControlName="onSupplementalOxygen">On supplemental oxygen</mat-checkbox>
           <div class="actions">
-            @if (error()) { <span class="error">{{ error() }}</span> }
+            @if (error()) {
+              <span class="error">{{ error() }}</span>
+            }
             <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || busy()">Enroll</button>
           </div>
         </form>
@@ -62,9 +76,22 @@ import { CONDITIONS, CareTeamMember, User, VITALS } from '../../core/models';
     </mat-card>
   `,
   styles: `
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 0 16px; margin-top: 12px; }
-    .actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 12px; align-items: center; }
-    .error { color: #c62828; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+      gap: 0 16px;
+      margin-top: 12px;
+    }
+    .actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      align-items: center;
+    }
+    .error {
+      color: #c62828;
+    }
   `,
 })
 export class EnrollComponent implements OnInit {

@@ -8,9 +8,18 @@ import { AlertSummary } from '../../core/models';
 import { AlertInboxComponent } from './alert-inbox.component';
 
 const alert: AlertSummary = {
-  id: 'a1', patientId: 'p1', type: 'ThresholdBreach', severity: 'Critical', message: 'SpO2 below critical limit (88 vs 91)',
-  status: 'EscalatedDoctor', escalationLevel: 1, assignedRole: 'Doctor', raisedAt: '2025-05-20T10:00:00Z',
-  lastOccurredAt: '2025-05-20T10:02:00Z', occurrenceCount: 3, nextEscalationAt: '2025-05-20T10:07:00Z',
+  id: 'a1',
+  patientId: 'p1',
+  type: 'ThresholdBreach',
+  severity: 'Critical',
+  message: 'SpO2 below critical limit (88 vs 91)',
+  status: 'EscalatedDoctor',
+  escalationLevel: 1,
+  assignedRole: 'Doctor',
+  raisedAt: '2025-05-20T10:00:00Z',
+  lastOccurredAt: '2025-05-20T10:02:00Z',
+  occurrenceCount: 3,
+  nextEscalationAt: '2025-05-20T10:07:00Z',
 };
 
 describe('AlertInboxComponent', () => {
